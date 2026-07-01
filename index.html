@@ -145,6 +145,15 @@
       margin-top: 2px;
     }
 
+    /* 指南针相对方向警示小标签 */
+    .compass-warning {
+      font-size: 9px;
+      color: var(--glow-orange);
+      letter-spacing: 1px;
+      margin-top: 4px;
+      display: none;
+    }
+
     /* 数据卡片样式 */
     .card {
       background-color: var(--card-bg);
@@ -271,6 +280,12 @@
       box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
     }
 
+    .btn-activate:disabled {
+      opacity: 0.4;
+      animation: none;
+      cursor: not-allowed;
+    }
+
     @keyframes pulse {
       0% {
         box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
@@ -325,11 +340,11 @@
 
     .map-icon {
       font-size: 12px;
-      color: var(--glow-cyan);
+      color: #00f0ff; /* [Bug8 修复] 使用字面量颜色替代 var()，增强兼容性 */
     }
 
     .map-btn-green .map-icon {
-      color: var(--glow-green);
+      color: #00ff66; /* [Bug8 修复] 同上 */
     }
 
     /* 错误/引导区域 */
@@ -395,9 +410,31 @@
       color: var(--glow-green) !important;
     }
 
-    /* 隐藏的 GCJ-02 卡片，将在判定后通过 JS 移除 class */
+    /* [Bug6 修复] 复制失败时的红色闪烁反馈 */
+    @keyframes failGlow {
+      0% { box-shadow: 0 0 0 rgba(255, 51, 102, 0); }
+      50% { box-shadow: 0 0 15px rgba(255, 51, 102, 0.6); }
+      100% { box-shadow: 0 0 0 rgba(255, 51, 102, 0); }
+    }
+
+    .fail-flash {
+      animation: failGlow 0.8s ease;
+      background: rgba(255, 51, 102, 0.1) !important;
+      border-color: var(--glow-red) !important;
+      color: var(--glow-red) !important;
+    }
+
+    /* 隐藏的 GCJ-02 卡片与 GCJ-02 地图按钮 */
     .hidden-card {
       display: none;
+    }
+
+    .gcj-map-btn {
+      display: none;
+    }
+
+    .gcj-map-btn.visible {
+      display: flex;
     }
   </style>
 </head>
@@ -428,11 +465,12 @@
         <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(0, 240, 255, 0.15)" stroke-dasharray="2, 4" stroke-width="1" />
         
         <!-- 刻度线 (每 30 度一格) -->
+        <!-- [Bug8 修复] SVG 属性中使用字面量颜色替代 CSS var()，兼容旧版 WebView -->
         <g stroke="rgba(0, 240, 255, 0.4)" stroke-width="1">
           <line x1="100" y1="10" x2="100" y2="16" />
           <line x1="100" y1="184" x2="100" y2="190" />
-          <line x1="10" y1="100" x2="16" y2="100" stroke="var(--glow-cyan)" />
-          <line x1="184" y1="100" x2="190" y2="100" stroke="var(--glow-cyan)" />
+          <line x1="10" y1="100" x2="16" y2="100" stroke="#00f0ff" />
+          <line x1="184" y1="100" x2="190" y2="100" stroke="#00f0ff" />
           <!-- 30° 刻度 -->
           <line x1="145" y1="22" x2="142" y2="27" />
           <line x1="178" y1="55" x2="173" y2="58" />
@@ -449,26 +487,28 @@
 
         <!-- 方向字母标注 -->
         <!-- 北针 N 特别使用警示红 -->
-        <text x="100" y="32" font-family="monospace" font-size="16" font-weight="900" fill="var(--glow-red)" text-anchor="middle">N</text>
-        <text x="175" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="var(--text-main)" text-anchor="middle">E</text>
-        <text x="100" y="180" font-family="monospace" font-size="14" font-weight="bold" fill="var(--text-main)" text-anchor="middle">S</text>
-        <text x="25" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="var(--text-main)" text-anchor="middle">W</text>
+        <text x="100" y="32" font-family="monospace" font-size="16" font-weight="900" fill="#ff3366" text-anchor="middle">N</text>
+        <text x="175" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">E</text>
+        <text x="100" y="180" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">S</text>
+        <text x="25" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">W</text>
 
         <!-- 细分角标 (NE, SE, SW, NW) -->
-        <text x="148" y="58" font-family="monospace" font-size="10" fill="var(--text-muted)" text-anchor="middle">NE</text>
-        <text x="148" y="150" font-family="monospace" font-size="10" fill="var(--text-muted)" text-anchor="middle">SE</text>
-        <text x="52" y="150" font-family="monospace" font-size="10" fill="var(--text-muted)" text-anchor="middle">SW</text>
-        <text x="52" y="58" font-family="monospace" font-size="10" fill="var(--text-muted)" text-anchor="middle">NW</text>
+        <text x="148" y="58" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">NE</text>
+        <text x="148" y="150" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">SE</text>
+        <text x="52" y="150" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">SW</text>
+        <text x="52" y="58" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">NW</text>
         
         <!-- 表盘核心十字线与准星 -->
         <line x1="100" y1="45" x2="100" y2="155" stroke="rgba(0, 240, 255, 0.1)" stroke-width="1" />
         <line x1="45" y1="100" x2="155" y2="100" stroke="rgba(0, 240, 255, 0.1)" stroke-width="1" />
-        <circle cx="100" cy="100" r="6" fill="none" stroke="var(--glow-cyan)" stroke-width="1.5" />
-        <circle cx="100" cy="100" r="1.5" fill="var(--glow-cyan)" />
+        <circle cx="100" cy="100" r="6" fill="none" stroke="#00f0ff" stroke-width="1.5" />
+        <circle cx="100" cy="100" r="1.5" fill="#00f0ff" />
       </svg>
       <div class="compass-data">
         <div id="compassDegree" class="compass-degree">000°</div>
         <div id="compassDirection" class="compass-direction">N</div>
+        <!-- [Bug4 修复] 当指南针使用相对方向时显示此警告 -->
+        <div id="compassWarning" class="compass-warning">RELATIVE HEADING</div>
       </div>
     </div>
 
@@ -506,9 +546,9 @@
       </div>
     </div>
 
-    <!-- GCJ-02 偏移卡片 (仅在中国境内或边境激活) -->
+    <!-- [Bug2 修复] GCJ-02 卡片标题已去除地名，使用纯技术性描述 -->
     <div id="gcjCard" class="card highlighted hidden-card">
-      <div class="card-title">GCJ-02 (DEVIATED FOR CHINA)</div>
+      <div class="card-title">GCJ-02 (OFFSET COORDINATES)</div>
       <div class="data-grid">
         <div class="data-item">
           <span class="data-label">Latitude</span>
@@ -524,17 +564,25 @@
       </div>
     </div>
 
-    <!-- 地图跳转按钮组 -->
+    <!-- [Bug5 修复] 地图按钮改为预渲染 DOM，通过 href 属性更新和 class 显隐控制，
+         避免每次 GPS 回调都用 innerHTML 重建整个 DOM -->
     <div class="card">
       <div class="card-title">MAP PLOTS</div>
       <div id="mapBtnGroup" class="map-grid">
-        <!-- 默认展示两个 WGS-84 跳转，其余 GCJ-02 按钮由 JS 依据地理围栏动态创建 -->
         <a id="gmapWgs" href="#" target="_blank" class="map-btn">
           <span>Open WGS-84 in Google Maps</span>
           <span class="map-icon">➜</span>
         </a>
         <a id="amapWgs" href="#" target="_blank" class="map-btn">
           <span>Open WGS-84 in Apple Maps</span>
+          <span class="map-icon">➜</span>
+        </a>
+        <a id="amapGcj" href="#" target="_blank" class="map-btn map-btn-green gcj-map-btn">
+          <span>Open GCJ-02 in Apple Maps</span>
+          <span class="map-icon">➜</span>
+        </a>
+        <a id="gmapGcj" href="#" target="_blank" class="map-btn map-btn-green gcj-map-btn">
+          <span>Open GCJ-02 in Google Maps</span>
           <span class="map-icon">➜</span>
         </a>
       </div>
@@ -554,15 +602,37 @@
      * ==========================================
      * 包含中国大陆、海南、台湾、港澳、南海海域、钓鱼岛及争议区
      * 代码级严格执行主权命名规范 (hongkong,china, macau,china, taiwan,china)
+     *
+     * [Bug3 修复] 多边形已补充东北漠河、西北阿勒泰、内蒙古呼伦贝尔凸出区域
+     *             以及钓鱼岛海域的控制点，避免领土覆盖缺口
      */
 
     // 覆盖整个中国陆地、海域与争议区边界的大多边形 (经纬度点集: [lng, lat])
     const REGION_CHINA_BOUNDARY = [
-      [73.5, 39.4], [73.5, 49.5], [87.3, 49.5], [96.4, 42.8],
-      [118.0, 53.6], [135.0, 48.4], [135.0, 42.5], [124.5, 26.5],
-      [123.5, 26.0], [123.0, 25.0], [123.0, 20.0], [118.0, 18.0],
-      [117.0, 10.0], [113.0, 3.0], [109.0, 3.0], [108.0, 12.0],
-      [108.0, 18.0], [104.5, 22.0], [97.3, 27.8], [91.5, 27.8],
+      // 西部帕米尔高原起点
+      [73.5, 39.4],
+      // 新疆北部，覆盖阿勒泰地区 (纬度 ~49°N, 经度 ~88°E)
+      [73.5, 49.5], [87.5, 49.5],
+      // 蒙古边境向东，覆盖内蒙古呼伦贝尔 (纬度 ~53°N)
+      [97.0, 42.8], [108.0, 42.0], [115.0, 45.0], [117.5, 46.8],
+      // 东北漠河凸出区 (纬度 ~53.5°N, 经度 ~122°E)
+      [119.5, 50.5], [122.5, 53.6],
+      // 黑龙江沿线向南至东海
+      [127.5, 53.0], [131.0, 48.5], [135.0, 48.4], [135.0, 42.5],
+      // 东海沿线，覆盖钓鱼岛海域 (约 123.47°E, 25.74°N)
+      [128.0, 38.0], [124.5, 33.0], [124.5, 27.0],
+      [124.0, 26.0], [123.5, 25.6],
+      // 台湾以东海域
+      [123.0, 23.0], [121.0, 20.0],
+      // 南海海域（九段线覆盖），涵盖南沙、西沙、中沙群岛
+      [118.0, 18.0], [117.5, 10.0], [113.0, 3.0], [109.0, 3.0],
+      // 北部湾及中越边境
+      [108.0, 12.0], [108.0, 18.5],
+      // 西南边境（云南、广西）
+      [104.5, 22.0], [97.5, 21.0],
+      // 西南边境（西藏南部）
+      [97.3, 28.0], [91.5, 27.8], [80.0, 28.5],
+      // 回到西部起点
       [78.0, 32.5]
     ];
 
@@ -605,7 +675,6 @@
 
     // 偏转判断：利用我们完整的多边形判定是否在中国境外
     function outOfChina(lat, lng) {
-      // 只要不在中国大版图多边形内，就认定在境外，不偏转
       return !isPointInPolygon(lng, lat, REGION_CHINA_BOUNDARY);
     }
 
@@ -650,6 +719,8 @@
     const filterAlpha = 0.15;      // 低通滤波平滑权重系数 (0 到 1 之间)
     let watchId = null;            // Geolocation 的监听 ID
     let wakeLockInstance = null;   // Screen Wake Lock 实例
+    let sensorActivated = false;   // [Bug7 修复] 防重入锁，防止按钮被疯狂点击
+    let lastIsChina = null;        // [Bug5 修复] 缓存上一次的境内/境外状态，避免不必要的 DOM 操作
     
     // GPS 数据对象
     let currentData = {
@@ -810,7 +881,10 @@
 
     /**
      * ==========================================
-     * 渲染 UI 视图与按需地图跳转生成
+     * [Bug5 修复] 渲染 UI 视图与按需地图跳转生成
+     * 不再使用 innerHTML 重建整个地图按钮 DOM，
+     * 改为直接更新已有元素的 href 属性，
+     * 仅在 isChina 状态切换时才执行按钮的显隐操作
      * ==========================================
      */
     function renderUIData() {
@@ -840,9 +914,12 @@
         ? `${Math.round(currentData.heading)}° ${getDirectionText(currentData.heading)}` 
         : 'N/A';
 
+      // 更新 WGS-84 地图按钮链接 (每次 GPS 更新只改 href，不重建 DOM)
+      document.getElementById('gmapWgs').href = `https://www.google.com/maps/search/?api=1&query=${currentData.wgsLat},${currentData.wgsLng}`;
+      document.getElementById('amapWgs').href = `https://maps.apple.com/?ll=${currentData.wgsLat},${currentData.wgsLng}&q=${currentData.wgsLat},${currentData.wgsLng}`;
+
       // 智能中国区域处理 (包含大陆、港澳台)
       const gcjCard = document.getElementById('gcjCard');
-      const mapBtnGroup = document.getElementById('mapBtnGroup');
       
       if (currentData.isChina) {
         // 在中国或边境区域，渲染 GCJ-02
@@ -853,40 +930,26 @@
         document.getElementById('gcjLat').innerText = `${Math.abs(currentData.gcjLat).toFixed(6)}° ${latDirGcj}`;
         document.getElementById('gcjLng').innerText = `${Math.abs(currentData.gcjLng).toFixed(6)}° ${lngDirGcj}`;
 
-        // 拼接 4 个跳转按钮
-        mapBtnGroup.innerHTML = `
-          <a href="https://www.google.com/maps/search/?api=1&query=${currentData.wgsLat},${currentData.wgsLng}" target="_blank" class="map-btn">
-            <span>Open WGS-84 in Google Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-          <a href="https://maps.apple.com/?ll=${currentData.wgsLat},${currentData.wgsLng}&q=${currentData.wgsLat},${currentData.wgsLng}" target="_blank" class="map-btn">
-            <span>Open WGS-84 in Apple Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-          <a href="https://maps.apple.com/?ll=${currentData.gcjLat},${currentData.gcjLng}&q=${currentData.gcjLat},${currentData.gcjLng}" target="_blank" class="map-btn map-btn-green">
-            <span>Open GCJ-02 in Apple Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-          <a href="https://www.google.com/maps/search/?api=1&query=${currentData.gcjLat},${currentData.gcjLng}" target="_blank" class="map-btn map-btn-green">
-            <span>Open GCJ-02 in Google Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-        `;
+        // 更新 GCJ-02 地图按钮链接
+        document.getElementById('amapGcj').href = `https://maps.apple.com/?ll=${currentData.gcjLat},${currentData.gcjLng}&q=${currentData.gcjLat},${currentData.gcjLng}`;
+        document.getElementById('gmapGcj').href = `https://www.google.com/maps/search/?api=1&query=${currentData.gcjLat},${currentData.gcjLng}`;
+
+        // 仅在状态从境外切换到境内时才执行 DOM class 操作
+        if (lastIsChina !== true) {
+          document.getElementById('amapGcj').classList.add('visible');
+          document.getElementById('gmapGcj').classList.add('visible');
+          lastIsChina = true;
+        }
       } else {
-        // 在国外区域，隐藏并淡化 GCJ-02
+        // 在国外区域，隐藏 GCJ-02
         gcjCard.classList.add('hidden-card');
 
-        // 拼接 2 个跳转按钮
-        mapBtnGroup.innerHTML = `
-          <a href="https://www.google.com/maps/search/?api=1&query=${currentData.wgsLat},${currentData.wgsLng}" target="_blank" class="map-btn">
-            <span>Open WGS-84 in Google Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-          <a href="https://maps.apple.com/?ll=${currentData.wgsLat},${currentData.wgsLng}&q=${currentData.wgsLat},${currentData.wgsLng}" target="_blank" class="map-btn">
-            <span>Open WGS-84 in Apple Maps</span>
-            <span class="map-icon">➜</span>
-          </a>
-        `;
+        // 仅在状态从境内切换到境外时才执行 DOM class 操作
+        if (lastIsChina !== false) {
+          document.getElementById('amapGcj').classList.remove('visible');
+          document.getElementById('gmapGcj').classList.remove('visible');
+          lastIsChina = false;
+        }
       }
 
       // 更新时间戳
@@ -900,6 +963,14 @@
      * ==========================================
      */
     async function startSensors() {
+      // [Bug7 修复] 防重入：如果已经激活过，直接返回
+      if (sensorActivated) return;
+      sensorActivated = true;
+
+      // 立即禁用按钮，防止重复点击
+      const btn = document.getElementById('activateBtn');
+      btn.disabled = true;
+
       // 隐藏激活按钮容器
       document.getElementById('activationContainer').style.display = 'none';
 
@@ -918,7 +989,8 @@
             if (permission === 'granted') {
               window.addEventListener('deviceorientation', handleOrientation, true);
             } else {
-              showError('COMPASS PERMISSION DENIED. absolute方向将不可用。');
+              // [Bug1 修复] 错误提示改为纯英文
+              showError('COMPASS PERMISSION DENIED. HEADING DATA WILL NOT BE AVAILABLE. PLEASE GRANT MOTION & ORIENTATION ACCESS IN YOUR BROWSER SETTINGS.');
             }
           } catch (err) {
             showError('SENSOR INITIALIZATION ERROR: ' + err.message);
@@ -928,26 +1000,40 @@
           if ('ondeviceorientationabsolute' in window) {
             window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute, true);
           } else {
-            window.addEventListener('deviceorientation', handleOrientation, true);
+            // [Bug4 修复] 安卓降级：即使 absolute 不可用，也监听普通 deviceorientation
+            // 并使用 alpha 值提供相对旋转反馈，同时显示警告标签
+            window.addEventListener('deviceorientation', handleOrientationFallback, true);
+            document.getElementById('compassWarning').style.display = 'block';
           }
         }
       } else {
-        showError('ORIENTATION SENSOR NOT SUPPORTED.');
+        showError('ORIENTATION SENSOR NOT SUPPORTED ON THIS DEVICE.');
       }
     }
 
-    // iOS 磁北朝向处理回调
+    // iOS 磁北朝向处理回调 (优先使用 webkitCompassHeading 获取绝对磁北)
     function handleOrientation(event) {
       if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
         updateCompassRotation(event.webkitCompassHeading);
       } else if (event.absolute === true && event.alpha !== null) {
-        // 回退逻辑，安卓设备如果支持绝对事件
+        // 回退逻辑：安卓设备如果支持绝对事件
         updateCompassRotation(360 - event.alpha);
       }
     }
 
     // 安卓绝对磁北朝向处理回调 (对 alpha 进行 360-alpha 取反)
     function handleOrientationAbsolute(event) {
+      if (event.alpha !== null) {
+        updateCompassRotation(360 - event.alpha);
+      }
+    }
+
+    /**
+     * [Bug4 修复] 安卓最终降级回调：当 absolute 事件不可用，且普通 event.absolute
+     * 也为 false 时，仍使用 event.alpha 提供相对方向旋转反馈。
+     * 用户界面上会显示 "RELATIVE HEADING" 警告标签，提示此方向非绝对磁北。
+     */
+    function handleOrientationFallback(event) {
       if (event.alpha !== null) {
         updateCompassRotation(360 - event.alpha);
       }
@@ -968,8 +1054,15 @@
           btn.innerText = originalText;
           btn.classList.remove('success-flash');
         }, 1500);
-      }).catch(err => {
-        console.error('Clipboard copy failed: ', err);
+      }).catch(() => {
+        // [Bug6 修复] 剪贴板写入失败时，给用户显示红色错误反馈
+        const originalText = btn.innerText;
+        btn.innerText = 'COPY FAILED';
+        btn.classList.add('fail-flash');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('fail-flash');
+        }, 1500);
       });
     }
 
@@ -999,6 +1092,7 @@
     /**
      * ==========================================
      * 自动化回归与系统自测试模块
+     * [Bug3 修复] 新增漠河、喀什、钓鱼岛测试用例
      * ==========================================
      */
     function runSystemSelfTest() {
@@ -1014,8 +1108,16 @@
         { name: 'Ruins of St. Paul, Macao, China', lng: 113.54089, lat: 22.19762, expectChina: true, expectHK: false, expectMacau: true, expectTaiwan: false },
         // 南海九段线内部区域：境内点
         { name: 'South China Sea Territorial Area', lng: 114.0, lat: 9.0, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
+        // [Bug3 新增] 漠河（中国最北端，纬度 ~53.5°N）
+        { name: 'Mohe (Northernmost China)', lng: 122.37, lat: 53.48, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
+        // [Bug3 新增] 喀什（中国最西端，经度 ~75.99°E）
+        { name: 'Kashgar (Westernmost China)', lng: 75.99, lat: 39.47, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
+        // [Bug3 新增] 钓鱼岛 (约 123.47°E, 25.74°N)
+        { name: 'Diaoyu Islands (China Territorial)', lng: 123.47, lat: 25.74, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
         // 英国伦敦大本钟：海外点
-        { name: 'London Big Ben (Outside China)', lng: -0.1246, lat: 51.5007, expectChina: false, expectHK: false, expectMacau: false, expectTaiwan: false }
+        { name: 'London Big Ben (Outside)', lng: -0.1246, lat: 51.5007, expectChina: false, expectHK: false, expectMacau: false, expectTaiwan: false },
+        // 纽约自由女神：海外点
+        { name: 'New York Statue of Liberty (Outside)', lng: -74.0445, lat: 40.6892, expectChina: false, expectHK: false, expectMacau: false, expectTaiwan: false }
       ];
 
       let allPassed = true;
@@ -1029,7 +1131,6 @@
 
         // 验证 GCJ-02 转换算法
         const gcj = wgs84ToGcj02(tc.lng, tc.lat);
-        // 若在境外，偏转应为0（转换前后相等）；若在境内，理应产生适当偏移值
         const hasOffset = (gcj[0] !== tc.lng || gcj[1] !== tc.lat);
         const offsetOk = tc.expectChina ? hasOffset : !hasOffset;
 

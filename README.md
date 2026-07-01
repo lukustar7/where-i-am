@@ -2,6 +2,8 @@
 
 An offline-capable, single-file H5 GPS dashboard designed for mobile browsers.
 
+> **Disclaimer**: This is a Beta version and a personal testing project. All data provided is for reference only and must not be used for any production or serious/critical navigation scenarios. Please comply with all local laws and regulations. The developer disclaims all liability and responsibility for any consequences arising from the use of this application.
+
 ## Features
 
 - **Compass**: Real-time direction with low-pass noise filtering and Android/iOS sensor support.
