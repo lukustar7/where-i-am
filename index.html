@@ -5,6 +5,13 @@
   <!-- 优化移动端视口，防用户双击缩放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TACTICAL GPS DASHBOARD</title>
+  <!-- PWA 支持与移动端主题配置 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060813">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tactical GPS">
+  <link rel="apple-touch-icon" href="icon.jpg">
   <style>
     /* 定义核心调色板，高对比度军规科技风 */
     :root {
@@ -163,15 +170,23 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
+    /* [Bug2 & Icon 优化] 优化卡片标题行，用于横向放置复制 Icon */
+    .card-title-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
     .card-title {
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 1.5px;
       color: var(--text-muted);
-      margin-bottom: 12px;
       border-left: 2px solid var(--glow-cyan);
       padding-left: 6px;
       text-transform: uppercase;
+      margin-bottom: 0;
     }
 
     .card.highlighted {
@@ -180,6 +195,40 @@
 
     .card.highlighted .card-title {
       border-left-color: var(--glow-green);
+    }
+
+    /* 行内复制小按钮样式 */
+    .copy-icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .copy-svg {
+      fill: var(--text-muted);
+      transition: fill 0.2s ease;
+    }
+
+    .copy-icon-btn:hover .copy-svg {
+      fill: var(--glow-cyan);
+    }
+
+    .copy-icon-btn:active {
+      background: rgba(0, 240, 255, 0.1);
+    }
+
+    .copy-icon-btn.success-flash .copy-svg {
+      fill: var(--glow-green) !important;
+    }
+
+    .copy-icon-btn.fail-flash .copy-svg {
+      fill: var(--glow-red) !important;
     }
 
     /* 数据栅格 */
@@ -217,44 +266,6 @@
 
     .data-value.active-green {
       color: var(--glow-green);
-    }
-
-    /* 按钮样式 */
-    .btn-container {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .btn {
-      flex: 1;
-      background: transparent;
-      border: 1px solid var(--glow-cyan);
-      color: var(--glow-cyan);
-      padding: 8px 12px;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-transform: uppercase;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-
-    .btn:active {
-      background: rgba(0, 240, 255, 0.15);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-    }
-
-    .btn-green {
-      border-color: var(--glow-green);
-      color: var(--glow-green);
-    }
-
-    .btn-green:active {
-      background: rgba(0, 255, 102, 0.15);
-      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
     }
 
     /* 主唤醒按钮 */
@@ -396,34 +407,6 @@
       border-color: var(--glow-cyan);
     }
 
-    /* 自定义复制成功的动画反馈 */
-    @keyframes successGlow {
-      0% { box-shadow: 0 0 0 rgba(0, 255, 102, 0); }
-      50% { box-shadow: 0 0 15px rgba(0, 255, 102, 0.6); }
-      100% { box-shadow: 0 0 0 rgba(0, 255, 102, 0); }
-    }
-
-    .success-flash {
-      animation: successGlow 0.8s ease;
-      background: rgba(0, 255, 102, 0.1) !important;
-      border-color: var(--glow-green) !important;
-      color: var(--glow-green) !important;
-    }
-
-    /* [Bug6 修复] 复制失败时的红色闪烁反馈 */
-    @keyframes failGlow {
-      0% { box-shadow: 0 0 0 rgba(255, 51, 102, 0); }
-      50% { box-shadow: 0 0 15px rgba(255, 51, 102, 0.6); }
-      100% { box-shadow: 0 0 0 rgba(255, 51, 102, 0); }
-    }
-
-    .fail-flash {
-      animation: failGlow 0.8s ease;
-      background: rgba(255, 51, 102, 0.1) !important;
-      border-color: var(--glow-red) !important;
-      color: var(--glow-red) !important;
-    }
-
     /* 隐藏的 GCJ-02 卡片与 GCJ-02 地图按钮 */
     .hidden-card {
       display: none;
@@ -514,7 +497,15 @@
 
     <!-- WGS-84 原始 GPS 卡片 -->
     <div class="card">
-      <div class="card-title">WGS-84 (RAW GPS)</div>
+      <div class="card-title-container">
+        <div class="card-title">WGS-84 (RAW GPS)</div>
+        <!-- [Icon 优化] 精致行内 SVG 复制按钮 -->
+        <button id="copyWgsBtn" class="copy-icon-btn" title="Copy Coordinates">
+          <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        </button>
+      </div>
       <div class="data-grid">
         <div class="data-item">
           <span class="data-label">Latitude</span>
@@ -541,14 +532,19 @@
           <span id="gpsHeading" class="data-value">N/A</span>
         </div>
       </div>
-      <div class="btn-container">
-        <button id="copyWgsBtn" class="btn">COPY COORDINATES</button>
-      </div>
     </div>
 
     <!-- [Bug2 修复] GCJ-02 卡片标题已去除地名，使用纯技术性描述 -->
     <div id="gcjCard" class="card highlighted hidden-card">
-      <div class="card-title">GCJ-02 (OFFSET COORDINATES)</div>
+      <div class="card-title-container">
+        <div class="card-title">GCJ-02 (OFFSET COORDINATES)</div>
+        <!-- [Icon 优化] 精致行内 SVG 复制按钮 -->
+        <button id="copyGcjBtn" class="copy-icon-btn" title="Copy Coordinates">
+          <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        </button>
+      </div>
       <div class="data-grid">
         <div class="data-item">
           <span class="data-label">Latitude</span>
@@ -559,15 +555,14 @@
           <span id="gcjLng" class="data-value active-green">0.000000° E</span>
         </div>
       </div>
-      <div class="btn-container">
-        <button id="copyGcjBtn" class="btn btn-green">COPY COORDINATES</button>
-      </div>
     </div>
 
     <!-- [Bug5 修复] 地图按钮改为预渲染 DOM，通过 href 属性更新和 class 显隐控制，
          避免每次 GPS 回调都用 innerHTML 重建整个 DOM -->
     <div class="card">
-      <div class="card-title">MAP PLOTS</div>
+      <div class="card-title-container">
+        <div class="card-title">MAP PLOTS</div>
+      </div>
       <div id="mapBtnGroup" class="map-grid">
         <a id="gmapWgs" href="#" target="_blank" class="map-btn">
           <span>Open WGS-84 in Google Maps</span>
@@ -592,7 +587,6 @@
   <!-- 底部状态栏 -->
   <footer>
     <div id="updateTime" class="update-time">LAST UPDATE: NEVER</div>
-    <button id="testBtn" class="btn-test">SYSTEM SELF-TEST</button>
   </footer>
 
   <script>
@@ -962,53 +956,49 @@
      * 传感器权限授权与绝对磁北指南针初始化
      * ==========================================
      */
-    async function startSensors() {
+    function startSensors() {
       // [Bug7 修复] 防重入：如果已经激活过，直接返回
       if (sensorActivated) return;
       sensorActivated = true;
 
       // 立即禁用按钮，防止重复点击
       const btn = document.getElementById('activateBtn');
-      btn.disabled = true;
+      if (btn) btn.disabled = true;
 
       // 隐藏激活按钮容器
-      document.getElementById('activationContainer').style.display = 'none';
+      const container = document.getElementById('activationContainer');
+      if (container) container.style.display = 'none';
 
-      // 1. 初始化 GPS 定位
-      initLocationWatch();
-
-      // 2. 初始化防睡眠常亮
-      await initWakeLock();
-
-      // 3. 初始化指南针
-      if (typeof DeviceOrientationEvent !== 'undefined') {
-        // iOS 13+ 特有传感器请求权限
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-          try {
-            const permission = await DeviceOrientationEvent.requestPermission();
+      // 1. 同步请求指南针传感器权限 (以确保在 iOS Safari 同步上下文唤起弹窗)
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then((permission) => {
             if (permission === 'granted') {
               window.addEventListener('deviceorientation', handleOrientation, true);
             } else {
               // [Bug1 修复] 错误提示改为纯英文
               showError('COMPASS PERMISSION DENIED. HEADING DATA WILL NOT BE AVAILABLE. PLEASE GRANT MOTION & ORIENTATION ACCESS IN YOUR BROWSER SETTINGS.');
             }
-          } catch (err) {
+          })
+          .catch((err) => {
             showError('SENSOR INITIALIZATION ERROR: ' + err.message);
-          }
-        } else {
-          // 安卓或旧版 iOS，尝试直接监听绝对方位
-          if ('ondeviceorientationabsolute' in window) {
-            window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute, true);
-          } else {
-            // [Bug4 修复] 安卓降级：即使 absolute 不可用，也监听普通 deviceorientation
-            // 并使用 alpha 值提供相对旋转反馈，同时显示警告标签
-            window.addEventListener('deviceorientation', handleOrientationFallback, true);
-            document.getElementById('compassWarning').style.display = 'block';
-          }
-        }
+          });
       } else {
-        showError('ORIENTATION SENSOR NOT SUPPORTED ON THIS DEVICE.');
+        // 安卓或非 iOS 13+
+        if ('ondeviceorientationabsolute' in window) {
+          window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute, true);
+        } else {
+          // [Bug4 修复] 安卓降级：即使 absolute 不可用，也监听普通 deviceorientation
+          // 并使用 alpha 值提供相对旋转反馈，同时显示警告标签
+          window.addEventListener('deviceorientation', handleOrientationFallback, true);
+          const warnLabel = document.getElementById('compassWarning');
+          if (warnLabel) warnLabel.style.display = 'block';
+        }
       }
+
+      // 2. 异步拉起其他定位和防锁屏传感器
+      initLocationWatch();
+      initWakeLock();
     }
 
     // iOS 磁北朝向处理回调 (优先使用 webkitCompassHeading 获取绝对磁北)
@@ -1041,26 +1031,27 @@
 
     /**
      * ==========================================
-     * 辅助操作：一键复制与错误处理面板
+     * [Icon 优化] 辅助操作：一键复制与微交互打勾反馈
      * ==========================================
      */
     function copyText(text, btnId) {
       const btn = document.getElementById(btnId);
+      const path = btn.querySelector('path');
       navigator.clipboard.writeText(text).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = 'COPIED ✓';
+        // 成功反馈：图标替换为打勾 (checkmark) SVG 路径，并触发发光动画
+        path.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
         btn.classList.add('success-flash');
         setTimeout(() => {
-          btn.innerText = originalText;
+          // 1.5秒后恢复为原始复制图标路径
+          path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
           btn.classList.remove('success-flash');
         }, 1500);
       }).catch(() => {
-        // [Bug6 修复] 剪贴板写入失败时，给用户显示红色错误反馈
-        const originalText = btn.innerText;
-        btn.innerText = 'COPY FAILED';
+        // 失败反馈：图标替换为打叉 (cross) 路径，并红光闪烁
+        path.setAttribute('d', 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z');
         btn.classList.add('fail-flash');
         setTimeout(() => {
-          btn.innerText = originalText;
+          path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
           btn.classList.remove('fail-flash');
         }, 1500);
       });
@@ -1068,12 +1059,15 @@
 
     function showError(msg) {
       const panel = document.getElementById('alertPanel');
-      panel.innerText = msg;
-      panel.style.display = 'block';
+      if (panel) {
+        panel.innerText = msg;
+        panel.style.display = 'block';
+      }
     }
 
     function hideError() {
-      document.getElementById('alertPanel').style.display = 'none';
+      const panel = document.getElementById('alertPanel');
+      if (panel) panel.style.display = 'none';
     }
 
     // 事件绑定
@@ -1154,7 +1148,24 @@
       console.log('--- SYSTEM SELF-TEST COMPLETED ---');
     }
 
-    document.getElementById('testBtn').addEventListener('click', runSystemSelfTest);
+    // For manual developer verification, run `runSystemSelfTest()` in the browser console.
+
+    /**
+     * ==========================================
+     * PWA Service Worker 注册逻辑
+     * ==========================================
+     */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((reg) => {
+            console.log('Service Worker registered successfully. Scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('Service Worker registration failed:', err);
+          });
+      });
+    }
   </script>
 </body>
 </html>
