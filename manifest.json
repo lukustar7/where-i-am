@@ -1,6 +1,6 @@
 {
-  "short_name": "TacticalGPS",
-  "name": "Tactical GPS Dashboard",
+  "short_name": "Where I AM",
+  "name": "Where I AM GPS Compass",
   "icons": [
     {
       "src": "icon.jpg",
@@ -10,8 +10,8 @@
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#060813",
-  "theme_color": "#00f0ff",
+  "background_color": "#050506",
+  "theme_color": "#050506",
   "display": "standalone",
   "orientation": "portrait"
 }

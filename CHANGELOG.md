@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-07-02
+
+### Added
+
+- Added a horizontal heading tape so the compass, GPS metrics, coordinates, and map actions fit within one mobile viewport.
+- Added GPS course priority above 8 km/h to reduce magnetic sensor drift during vehicle use.
+
+### Changed
+
+- Renamed the PWA shell to "Where I AM GPS Compass".
+- Reworked coordinates and map actions into a compact glass-style layout while preserving the WGS-84/GCJ-02 dual-coordinate flow and four map-link state.
+
+### Fixed
+
+- Fixed a northern boundary gap in the configured geofence self-test.
+- Fixed retry behavior after denied or failed sensor/location initialization.
+- Limited Service Worker fetch handling to same-origin GET requests to avoid intercepting external map links or non-cacheable requests.
+
 ## [0.0.2] - 2026-07-02
 
 ### Added
@@ -31,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added H5 single-file dashboard implementation in `index.html` featuring zero external dependencies.
 - Added iOS and Android compatibility layers for device orientation sensors with permission request controls.
 - Added low-pass noise filtering and shortest angle rotation interpolation for steady compass updates.
-- Added ray-casting polygon boundary geofencing for regional territory detection.
+- Added ray-casting polygon boundary detection for configured offset rules.
 - Added coordinate deviation offset algorithm triggered inside designated boundary geofences.
 - Added Apple Maps and Google Maps universal deep-linking handlers for both raw and deviated positions.
 - Added Screen Wake Lock API integrations to prevent device sleep states during navigation.

@@ -4,25 +4,31 @@
   <meta charset="UTF-8">
   <!-- 优化移动端视口，防用户双击缩放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TACTICAL GPS DASHBOARD</title>
+  <title>Where I AM</title>
   <!-- PWA 支持与移动端主题配置 -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#060813">
+  <meta name="theme-color" content="#050506">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tactical GPS">
+  <meta name="apple-mobile-web-app-title" content="Where I AM">
   <link rel="apple-touch-icon" href="icon.jpg">
   <style>
-    /* 定义核心调色板，高对比度军规科技风 */
     :root {
-      --bg-color: #060813;        /* 极深黑色背景，减少屏幕发光，利于强光下阅读 */
-      --card-bg: rgba(14, 20, 38, 0.7); /* 卡片半透明背景 */
-      --glow-cyan: #00f0ff;       /* 科技青色，主高亮色 */
-      --glow-green: #00ff66;      /* 荧光绿色，状态正常 */
-      --glow-orange: #ff9900;     /* 警告橙色，提示授权或传感器未激活 */
-      --glow-red: #ff3366;        /* 警报红色，指示错误或极北方向 */
-      --text-main: #e2e8f0;       /* 主文本颜色 */
-      --text-muted: #64748b;      /* 辅助文本颜色 */
+      --bg-color: #050506;
+      --surface: rgba(28, 28, 30, 0.62);
+      --surface-strong: rgba(44, 44, 46, 0.72);
+      --surface-soft: rgba(255, 255, 255, 0.055);
+      --line: rgba(255, 255, 255, 0.14);
+      --line-strong: rgba(255, 255, 255, 0.24);
+      --text-main: #f5f5f7;
+      --text-muted: #a1a1a6;
+      --text-dim: #6e6e73;
+      --accent-red: #ff453a;
+      --accent-green: #30d158;
+      --accent-blue: #0a84ff;
+      --accent-amber: #ffd60a;
+      --radius: 8px;
+      --blur: 24px;
     }
 
     * {
@@ -33,381 +39,459 @@
       user-select: none;
     }
 
+    html {
+      background: var(--bg-color);
+    }
+
     body {
-      background-color: var(--bg-color);
+      background:
+        linear-gradient(180deg, #111113 0%, #050506 38%, #000000 100%);
       color: var(--text-main);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      min-height: 100vh;
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px;
+      padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
       overflow-x: hidden;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* 顶部仪表状态栏 */
     header {
       width: 100%;
-      max-width: 450px;
+      max-width: 520px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding: 8px 12px;
-      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 0 2px;
     }
 
     .title {
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: var(--glow-cyan);
-      text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+      font-size: 17px;
+      font-weight: 650;
+      letter-spacing: 0;
+      color: var(--text-main);
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.1;
+    }
+
+    .status-stack {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
     }
 
     .status-badge {
       font-size: 11px;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      background: rgba(255, 153, 0, 0.1);
-      border: 1px solid var(--glow-orange);
-      color: var(--glow-orange);
-      text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: var(--radius);
+      background: rgba(255, 214, 10, 0.12);
+      border: 1px solid rgba(255, 214, 10, 0.24);
+      color: var(--accent-amber);
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .status-badge.active {
-      background: rgba(0, 255, 102, 0.1);
-      border: 1px solid var(--glow-green);
-      color: var(--glow-green);
-      text-shadow: 0 0 5px rgba(0, 255, 102, 0.3);
+      background: rgba(48, 209, 88, 0.14);
+      border-color: rgba(48, 209, 88, 0.28);
+      color: var(--accent-green);
     }
 
-    /* 主要容器 */
+    .source-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+      color: var(--text-muted);
+    }
+
     main {
       width: 100%;
-      max-width: 450px;
+      max-width: 520px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 10px;
       flex-grow: 1;
     }
 
-    /* 指南针容器 */
-    .compass-container {
+    .glass-panel {
       position: relative;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.115), rgba(255, 255, 255, 0.045)),
+        var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(var(--blur)) saturate(155%);
+      -webkit-backdrop-filter: blur(var(--blur)) saturate(155%);
+    }
+
+    .activation-row {
+      display: flex;
+    }
+
+    .btn-activate {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: var(--radius);
+      background: #f5f5f7;
+      color: #050506;
+      padding: 0 16px;
+      font-size: 15px;
+      font-weight: 650;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .btn-activate:active {
+      transform: scale(0.99);
+    }
+
+    .btn-activate:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .alert-panel {
+      background: rgba(255, 69, 58, 0.12);
+      border: 1px solid rgba(255, 69, 58, 0.34);
+      color: #ffd7d4;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      display: none;
+      line-height: 1.45;
+    }
+
+    .compass-container {
+      height: 188px;
+      position: relative;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      margin: 10px 0;
+      justify-content: space-between;
+      padding: 16px 0 13px;
     }
 
-    /* 指南针绝对北向对齐指示针（固定在正上方） */
-    .compass-pointer {
-      position: absolute;
-      top: -6px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 15px solid var(--glow-red);
-      filter: drop-shadow(0 0 4px rgba(255, 51, 102, 0.8));
-      z-index: 10;
-    }
-
-    /* SVG 丝滑旋转表盘 */
-    .compass-dial {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      border: 2px solid rgba(0, 240, 255, 0.3);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-      background: radial-gradient(circle, rgba(14,20,38,0.9) 0%, rgba(6,8,19,0.95) 100%);
-      will-change: transform;
-    }
-
-    /* 指南针文本数据 */
-    .compass-data {
-      margin-top: 12px;
+    .heading-readout {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      line-height: 1;
     }
 
     .compass-degree {
-      font-size: 28px;
-      font-family: monospace;
-      font-weight: bold;
-      color: var(--glow-cyan);
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+      font-size: 58px;
+      font-weight: 720;
+      letter-spacing: 0;
+      color: var(--text-main);
+      line-height: 0.95;
     }
 
     .compass-direction {
-      font-size: 14px;
+      min-width: 34px;
+      font-size: 18px;
+      font-weight: 620;
       color: var(--text-muted);
-      letter-spacing: 1px;
-      margin-top: 2px;
+      letter-spacing: 0;
     }
 
-    /* 指南针相对方向警示小标签 */
     .compass-warning {
-      font-size: 9px;
-      color: var(--glow-orange);
-      letter-spacing: 1px;
-      margin-top: 4px;
+      min-height: 13px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 650;
+      color: var(--accent-amber);
+      letter-spacing: 0;
       display: none;
     }
 
-    /* 数据卡片样式 */
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid rgba(0, 240, 255, 0.15);
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    .compass-tape-window {
+      height: 82px;
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.18);
+      mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%);
     }
 
-    /* [Bug2 & Icon 优化] 优化卡片标题行，用于横向放置复制 Icon */
-    .card-title-container {
+    .compass-tape {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      height: 82px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+      align-items: stretch;
+      will-change: transform;
+      transition: transform 120ms linear;
     }
 
-    .card-title {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      border-left: 2px solid var(--glow-cyan);
-      padding-left: 6px;
-      text-transform: uppercase;
-      margin-bottom: 0;
-    }
-
-    .card.highlighted {
-      border: 1px solid rgba(0, 255, 102, 0.25);
-    }
-
-    .card.highlighted .card-title {
-      border-left-color: var(--glow-green);
-    }
-
-    /* 行内复制小按钮样式 */
-    .copy-icon-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 4px;
+    .tape-mark {
+      width: 44px;
+      height: 82px;
+      flex: 0 0 44px;
+      position: relative;
       display: flex;
-      align-items: center;
       justify-content: center;
-      border-radius: 4px;
-      transition: all 0.2s ease;
+      align-items: flex-end;
+      padding-bottom: 8px;
     }
 
-    .copy-svg {
-      fill: var(--text-muted);
-      transition: fill 0.2s ease;
+    .tape-mark::before {
+      content: "";
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      width: 1px;
+      height: 15px;
+      background: rgba(245, 245, 247, 0.58);
+      transform: translateX(-50%);
     }
 
-    .copy-icon-btn:hover .copy-svg {
-      fill: var(--glow-cyan);
+    .tape-mark.major::before {
+      height: 28px;
+      background: rgba(245, 245, 247, 0.9);
     }
 
-    .copy-icon-btn:active {
-      background: rgba(0, 240, 255, 0.1);
+    .tape-mark.north::before {
+      width: 2px;
+      background: var(--accent-red);
+      box-shadow: 0 0 14px rgba(255, 69, 58, 0.58);
     }
 
-    .copy-icon-btn.success-flash .copy-svg {
-      fill: var(--glow-green) !important;
+    .tape-label {
+      font-size: 12px;
+      font-weight: 650;
+      color: rgba(245, 245, 247, 0.74);
+      line-height: 1;
     }
 
-    .copy-icon-btn.fail-flash .copy-svg {
-      fill: var(--glow-red) !important;
+    .tape-mark.north .tape-label {
+      color: var(--accent-red);
     }
 
-    /* 数据栅格 */
-    .data-grid {
+    .compass-pointer {
+      position: absolute;
+      left: 50%;
+      bottom: 13px;
+      width: 2px;
+      height: 72px;
+      transform: translateX(-50%);
+      background: var(--accent-red);
+      box-shadow: 0 0 18px rgba(255, 69, 58, 0.55);
+      z-index: 2;
+    }
+
+    .compass-pointer::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 11px solid var(--accent-red);
+      transform: translateX(-50%);
+    }
+
+    .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
     }
 
+    .metric,
     .data-item {
+      min-height: 54px;
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 9px 10px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      overflow: hidden;
     }
 
     .data-label {
       font-size: 10px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 2px;
+      font-weight: 600;
+      color: var(--text-dim);
+      line-height: 1;
     }
 
     .data-value {
-      font-size: 16px;
-      font-family: monospace;
-      font-weight: bold;
+      font-size: 15px;
+      font-weight: 650;
       color: var(--text-main);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      line-height: 1.12;
     }
 
     .data-value.active {
-      color: var(--glow-cyan);
+      color: var(--accent-blue);
     }
 
     .data-value.active-green {
-      color: var(--glow-green);
+      color: var(--accent-green);
     }
 
-    /* 主唤醒按钮 */
-    .btn-activate {
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(0, 255, 102, 0.2) 100%);
-      border: 1px solid var(--glow-cyan);
-      color: #ffffff;
-      padding: 16px;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      border-radius: 8px;
-      width: 100%;
+    .coordinates-panel,
+    .map-panel {
+      padding: 11px 12px;
+    }
+
+    .panel-title-row,
+    .card-title-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .card-title,
+    .panel-title {
+      font-size: 11px;
+      font-weight: 650;
+      color: var(--text-muted);
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .coordinate-card {
+      padding: 0;
+    }
+
+    .coordinate-card + .coordinate-card {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .coordinate-grid,
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .copy-icon-btn {
+      width: 30px;
+      height: 30px;
+      border: 0;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
       cursor: pointer;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-      animation: pulse 2.5s infinite;
-      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.16s ease, background 0.16s ease;
     }
 
-    .btn-activate:active {
-      transform: scale(0.98);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+    .copy-icon-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.14);
     }
 
-    .btn-activate:disabled {
-      opacity: 0.4;
-      animation: none;
-      cursor: not-allowed;
+    .copy-svg {
+      fill: var(--text-muted);
+      transition: fill 0.16s ease;
     }
 
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-      }
-      50% {
-        box-shadow: 0 0 25px rgba(0, 240, 255, 0.45);
-      }
-      100% {
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-      }
+    .copy-icon-btn.success-flash .copy-svg {
+      fill: var(--accent-green) !important;
     }
 
-    /* 地图跳转区域 */
+    .copy-icon-btn.fail-flash .copy-svg {
+      fill: var(--accent-red) !important;
+    }
+
     .map-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .map-btn {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      background: rgba(14, 20, 38, 0.5);
-      border: 1px solid rgba(0, 240, 255, 0.25);
-      border-radius: 6px;
-      padding: 12px 16px;
+      justify-content: space-between;
+      min-height: 40px;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.075);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 0 10px;
       color: var(--text-main);
-      font-size: 11px;
-      font-weight: bold;
+      font-size: 12px;
+      font-weight: 620;
       text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: all 0.2s ease;
+      line-height: 1.12;
+      transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
     }
 
     .map-btn:active {
-      border-color: var(--glow-cyan);
-      background: rgba(0, 240, 255, 0.1);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+      transform: scale(0.985);
+      border-color: rgba(10, 132, 255, 0.45);
+      background: rgba(10, 132, 255, 0.14);
     }
 
     .map-btn-green {
-      border-color: rgba(0, 255, 102, 0.25);
+      border-color: rgba(48, 209, 88, 0.16);
     }
 
     .map-btn-green:active {
-      border-color: var(--glow-green);
-      background: rgba(0, 255, 102, 0.1);
-      box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+      border-color: rgba(48, 209, 88, 0.45);
+      background: rgba(48, 209, 88, 0.14);
     }
 
     .map-icon {
       font-size: 12px;
-      color: #00f0ff; /* [Bug8 修复] 使用字面量颜色替代 var()，增强兼容性 */
+      color: var(--accent-blue);
     }
 
     .map-btn-green .map-icon {
-      color: #00ff66; /* [Bug8 修复] 同上 */
+      color: var(--accent-green);
     }
 
-    /* 错误/引导区域 */
-    .alert-panel {
-      background: rgba(255, 51, 102, 0.1);
-      border: 1px solid var(--glow-red);
-      color: #ffb3c1;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 12px;
-      display: none;
-      line-height: 1.5;
-    }
-
-    /* 底部刷新时间与控制 */
     footer {
       width: 100%;
-      max-width: 450px;
-      margin-top: 20px;
-      padding: 12px;
-      border-top: 1px solid rgba(100, 116, 139, 0.2);
+      max-width: 520px;
+      margin-top: 8px;
+      padding: 0 2px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
+      justify-content: center;
     }
 
     .update-time {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-family: monospace;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0;
     }
 
-    .btn-test {
-      background: transparent;
-      border: 1px dashed var(--text-muted);
-      color: var(--text-muted);
-      padding: 4px 10px;
-      font-size: 9px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-transform: uppercase;
-    }
-
-    .btn-test:active {
-      color: var(--glow-cyan);
-      border-color: var(--glow-cyan);
-    }
-
-    /* 隐藏的 GCJ-02 卡片与 GCJ-02 地图按钮 */
     .hidden-card {
       display: none;
     }
@@ -419,172 +503,175 @@
     .gcj-map-btn.visible {
       display: flex;
     }
+
+    @media (max-width: 370px) {
+      body {
+        padding-left: 9px;
+        padding-right: 9px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .compass-degree {
+        font-size: 52px;
+      }
+    }
+
+    @media (max-height: 760px) {
+      body {
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+
+      main {
+        gap: 8px;
+      }
+
+      .compass-container {
+        height: 166px;
+        padding-top: 12px;
+      }
+
+      .compass-degree {
+        font-size: 50px;
+      }
+
+      .metric,
+      .data-item {
+        min-height: 48px;
+        padding: 7px 9px;
+      }
+
+      .map-btn {
+        min-height: 36px;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <!-- 顶部状态栏 -->
   <header>
-    <div class="title">TACTICAL GPS</div>
-    <div id="lockStatus" class="status-badge">WAKE LOCK OFF</div>
+    <div>
+      <div class="title">Where I AM</div>
+      <div class="subtitle">Offline GPS compass</div>
+    </div>
+    <div class="status-stack">
+      <div id="compassSource" class="status-badge source-badge">WAITING</div>
+      <div id="lockStatus" class="status-badge">WAKE OFF</div>
+    </div>
   </header>
 
   <main>
-    <!-- 激活按钮区（首屏引导用户交互以获取 iOS 的传感器与定位权限） -->
-    <div id="activationContainer">
-      <button id="activateBtn" class="btn-activate">ACTIVATE SENSORS</button>
+    <div id="activationContainer" class="activation-row">
+      <button id="activateBtn" class="btn-activate">Start Sensors</button>
     </div>
 
-    <!-- 异常提示面板 -->
     <div id="alertPanel" class="alert-panel"></div>
 
-    <!-- 指南针区域 -->
-    <div class="compass-container">
-      <div class="compass-pointer"></div>
-      <!-- SVG 绘制的高对比度表盘 -->
-      <svg id="compassDial" class="compass-dial" viewBox="0 0 200 200">
-        <!-- 表盘外圈轨道 -->
-        <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1.5" />
-        <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(0, 240, 255, 0.15)" stroke-dasharray="2, 4" stroke-width="1" />
-        
-        <!-- 刻度线 (每 30 度一格) -->
-        <!-- [Bug8 修复] SVG 属性中使用字面量颜色替代 CSS var()，兼容旧版 WebView -->
-        <g stroke="rgba(0, 240, 255, 0.4)" stroke-width="1">
-          <line x1="100" y1="10" x2="100" y2="16" />
-          <line x1="100" y1="184" x2="100" y2="190" />
-          <line x1="10" y1="100" x2="16" y2="100" stroke="#00f0ff" />
-          <line x1="184" y1="100" x2="190" y2="100" stroke="#00f0ff" />
-          <!-- 30° 刻度 -->
-          <line x1="145" y1="22" x2="142" y2="27" />
-          <line x1="178" y1="55" x2="173" y2="58" />
-          <!-- 120° 刻度 -->
-          <line x1="178" y1="145" x2="173" y2="142" />
-          <line x1="145" y1="178" x2="142" y2="173" />
-          <!-- 210° 刻度 -->
-          <line x1="55" y1="178" x2="58" y2="173" />
-          <line x1="22" y1="145" x2="27" y2="142" />
-          <!-- 300° 刻度 -->
-          <line x1="22" y1="55" x2="27" y2="58" />
-          <line x1="55" y1="22" x2="58" y2="27" />
-        </g>
-
-        <!-- 方向字母标注 -->
-        <!-- 北针 N 特别使用警示红 -->
-        <text x="100" y="32" font-family="monospace" font-size="16" font-weight="900" fill="#ff3366" text-anchor="middle">N</text>
-        <text x="175" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">E</text>
-        <text x="100" y="180" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">S</text>
-        <text x="25" y="106" font-family="monospace" font-size="14" font-weight="bold" fill="#e2e8f0" text-anchor="middle">W</text>
-
-        <!-- 细分角标 (NE, SE, SW, NW) -->
-        <text x="148" y="58" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">NE</text>
-        <text x="148" y="150" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">SE</text>
-        <text x="52" y="150" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">SW</text>
-        <text x="52" y="58" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">NW</text>
-        
-        <!-- 表盘核心十字线与准星 -->
-        <line x1="100" y1="45" x2="100" y2="155" stroke="rgba(0, 240, 255, 0.1)" stroke-width="1" />
-        <line x1="45" y1="100" x2="155" y2="100" stroke="rgba(0, 240, 255, 0.1)" stroke-width="1" />
-        <circle cx="100" cy="100" r="6" fill="none" stroke="#00f0ff" stroke-width="1.5" />
-        <circle cx="100" cy="100" r="1.5" fill="#00f0ff" />
-      </svg>
-      <div class="compass-data">
-        <div id="compassDegree" class="compass-degree">000°</div>
-        <div id="compassDirection" class="compass-direction">N</div>
-        <!-- [Bug4 修复] 当指南针使用相对方向时显示此警告 -->
+    <section class="compass-container glass-panel" aria-label="Compass">
+      <div>
+        <div class="heading-readout">
+          <div id="compassDegree" class="compass-degree">000°</div>
+          <div id="compassDirection" class="compass-direction">N</div>
+        </div>
         <div id="compassWarning" class="compass-warning">RELATIVE HEADING</div>
       </div>
-    </div>
+      <div class="compass-tape-window">
+        <div id="compassTape" class="compass-tape"></div>
+      </div>
+      <div class="compass-pointer" aria-hidden="true"></div>
+    </section>
 
-    <!-- WGS-84 原始 GPS 卡片 -->
-    <div class="card">
-      <div class="card-title-container">
-        <div class="card-title">WGS-84 (RAW GPS)</div>
-        <!-- [Icon 优化] 精致行内 SVG 复制按钮 -->
-        <button id="copyWgsBtn" class="copy-icon-btn" title="Copy Coordinates">
-          <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-          </svg>
-        </button>
+    <section class="metrics-grid" aria-label="GPS metrics">
+      <div class="metric">
+        <span class="data-label">Accuracy</span>
+        <span id="gpsAcc" class="data-value">N/A</span>
       </div>
-      <div class="data-grid">
-        <div class="data-item">
-          <span class="data-label">Latitude</span>
-          <span id="wgsLat" class="data-value">0.000000° N</span>
-        </div>
-        <div class="data-item">
-          <span class="data-label">Longitude</span>
-          <span id="wgsLng" class="data-value">0.000000° E</span>
-        </div>
-        <div class="data-item">
-          <span class="data-label">Altitude</span>
-          <span id="gpsAlt" class="data-value">N/A</span>
-        </div>
-        <div class="data-item">
-          <span class="data-label">Accuracy</span>
-          <span id="gpsAcc" class="data-value">N/A</span>
-        </div>
-        <div class="data-item">
-          <span class="data-label">Speed</span>
-          <span id="gpsSpd" class="data-value">0.0 km/h</span>
-        </div>
-        <div class="data-item">
-          <span class="data-label">GPS Heading</span>
-          <span id="gpsHeading" class="data-value">N/A</span>
-        </div>
+      <div class="metric">
+        <span class="data-label">Altitude</span>
+        <span id="gpsAlt" class="data-value">N/A</span>
       </div>
-    </div>
+      <div class="metric">
+        <span class="data-label">Speed</span>
+        <span id="gpsSpd" class="data-value">0.0 km/h</span>
+      </div>
+      <div class="metric">
+        <span class="data-label">Course</span>
+        <span id="gpsHeading" class="data-value">N/A</span>
+      </div>
+    </section>
 
-    <!-- [Bug2 修复] GCJ-02 卡片标题已去除地名，使用纯技术性描述 -->
-    <div id="gcjCard" class="card highlighted hidden-card">
-      <div class="card-title-container">
-        <div class="card-title">GCJ-02 (OFFSET COORDINATES)</div>
-        <!-- [Icon 优化] 精致行内 SVG 复制按钮 -->
-        <button id="copyGcjBtn" class="copy-icon-btn" title="Copy Coordinates">
-          <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-          </svg>
-        </button>
-      </div>
-      <div class="data-grid">
-        <div class="data-item">
-          <span class="data-label">Latitude</span>
-          <span id="gcjLat" class="data-value active-green">0.000000° N</span>
+    <section class="coordinates-panel glass-panel" aria-label="Coordinates">
+      <div class="coordinate-card">
+        <div class="card-title-container">
+          <div class="card-title">WGS-84 Raw GPS</div>
+          <button id="copyWgsBtn" class="copy-icon-btn" title="Copy WGS-84 coordinates" aria-label="Copy WGS-84 coordinates">
+            <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
         </div>
-        <div class="data-item">
-          <span class="data-label">Longitude</span>
-          <span id="gcjLng" class="data-value active-green">0.000000° E</span>
+        <div class="coordinate-grid">
+          <div class="data-item">
+            <span class="data-label">Latitude</span>
+            <span id="wgsLat" class="data-value">0.000000° N</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Longitude</span>
+            <span id="wgsLng" class="data-value">0.000000° E</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- [Bug5 修复] 地图按钮改为预渲染 DOM，通过 href 属性更新和 class 显隐控制，
-         避免每次 GPS 回调都用 innerHTML 重建整个 DOM -->
-    <div class="card">
-      <div class="card-title-container">
-        <div class="card-title">MAP PLOTS</div>
+      <div id="gcjCard" class="coordinate-card hidden-card">
+        <div class="card-title-container">
+          <div class="card-title">GCJ-02 Offset</div>
+          <button id="copyGcjBtn" class="copy-icon-btn" title="Copy GCJ-02 coordinates" aria-label="Copy GCJ-02 coordinates">
+            <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="coordinate-grid">
+          <div class="data-item">
+            <span class="data-label">Latitude</span>
+            <span id="gcjLat" class="data-value active-green">0.000000° N</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Longitude</span>
+            <span id="gcjLng" class="data-value active-green">0.000000° E</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="map-panel glass-panel" aria-label="Map links">
+      <div class="panel-title-row">
+        <div class="panel-title">Map Plots</div>
       </div>
       <div id="mapBtnGroup" class="map-grid">
-        <a id="gmapWgs" href="#" target="_blank" class="map-btn">
-          <span>Open WGS-84 in Google Maps</span>
-          <span class="map-icon">➜</span>
+        <a id="amapWgs" href="#" target="_blank" rel="noopener noreferrer" class="map-btn">
+          <span>Apple WGS</span>
+          <span class="map-icon">-></span>
         </a>
-        <a id="amapWgs" href="#" target="_blank" class="map-btn">
-          <span>Open WGS-84 in Apple Maps</span>
-          <span class="map-icon">➜</span>
+        <a id="gmapWgs" href="#" target="_blank" rel="noopener noreferrer" class="map-btn">
+          <span>Google WGS</span>
+          <span class="map-icon">-></span>
         </a>
-        <a id="amapGcj" href="#" target="_blank" class="map-btn map-btn-green gcj-map-btn">
-          <span>Open GCJ-02 in Apple Maps</span>
-          <span class="map-icon">➜</span>
+        <a id="amapGcj" href="#" target="_blank" rel="noopener noreferrer" class="map-btn map-btn-green gcj-map-btn">
+          <span>Apple GCJ</span>
+          <span class="map-icon">-></span>
         </a>
-        <a id="gmapGcj" href="#" target="_blank" class="map-btn map-btn-green gcj-map-btn">
-          <span>Open GCJ-02 in Google Maps</span>
-          <span class="map-icon">➜</span>
+        <a id="gmapGcj" href="#" target="_blank" rel="noopener noreferrer" class="map-btn map-btn-green gcj-map-btn">
+          <span>Google GCJ</span>
+          <span class="map-icon">-></span>
         </a>
       </div>
-    </div>
+    </section>
   </main>
 
-  <!-- 底部状态栏 -->
   <footer>
     <div id="updateTime" class="update-time">LAST UPDATE: NEVER</div>
   </footer>
@@ -592,56 +679,42 @@
   <script>
     /**
      * ==========================================
-     * 中国领土多边形地理围栏定义 (根据大陆官方版图)
+     * 坐标偏移适用范围定义
      * ==========================================
-     * 包含中国大陆、海南、台湾、港澳、南海海域、钓鱼岛及争议区
-     * 代码级严格执行主权命名规范 (hongkong,china, macau,china, taiwan,china)
-     *
-     * [Bug3 修复] 多边形已补充东北漠河、西北阿勒泰、内蒙古呼伦贝尔凸出区域
-     *             以及钓鱼岛海域的控制点，避免领土覆盖缺口
+     * 这些多边形只用于判断何时显示双坐标和偏移坐标地图入口。
+     * 所有点集均为经纬度数组，格式为 [lng, lat]。
      */
 
-    // 覆盖整个中国陆地、海域与争议区边界的大多边形 (经纬度点集: [lng, lat])
-    const REGION_CHINA_BOUNDARY = [
-      // 西部帕米尔高原起点
+    // 主偏移范围多边形。
+    const REGION_OFFSET_BOUNDARY = [
+      // 西侧控制点
       [73.5, 39.4],
-      // 新疆北部，覆盖阿勒泰地区 (纬度 ~49°N, 经度 ~88°E)
       [73.5, 49.5], [87.5, 49.5],
-      // 蒙古边境向东，覆盖内蒙古呼伦贝尔 (纬度 ~53°N)
       [97.0, 42.8], [108.0, 42.0], [115.0, 45.0], [117.5, 46.8],
-      // 东北漠河凸出区 (纬度 ~53.5°N, 经度 ~122°E)
-      [119.5, 50.5], [122.5, 53.6],
-      // 黑龙江沿线向南至东海
+      [119.5, 50.5], [121.0, 54.0], [123.5, 54.0],
       [127.5, 53.0], [131.0, 48.5], [135.0, 48.4], [135.0, 42.5],
-      // 东海沿线，覆盖钓鱼岛海域 (约 123.47°E, 25.74°N)
       [128.0, 38.0], [124.5, 33.0], [124.5, 27.0],
       [124.0, 26.0], [123.5, 25.6],
-      // 台湾以东海域
       [123.0, 23.0], [121.0, 20.0],
-      // 南海海域（九段线覆盖），涵盖南沙、西沙、中沙群岛
       [118.0, 18.0], [117.5, 10.0], [113.0, 3.0], [109.0, 3.0],
-      // 北部湾及中越边境
       [108.0, 12.0], [108.0, 18.5],
-      // 西南边境（云南、广西）
       [104.5, 22.0], [97.5, 21.0],
-      // 西南边境（西藏南部）
       [97.3, 28.0], [91.5, 27.8], [80.0, 28.5],
-      // 回到西部起点
       [78.0, 32.5]
     ];
 
-    // 特定的香港行政区多边形，代号 hongkong,china
-    const REGION_HONGKONG_CHINA = [
+    // 附加偏移范围 A。
+    const REGION_OFFSET_ZONE_A = [
       [113.8, 22.1], [114.4, 22.1], [114.4, 22.6], [113.8, 22.6]
     ];
 
-    // 特定的澳门行政区多边形，代号 macau,china
-    const REGION_MACAU_CHINA = [
+    // 附加偏移范围 B。
+    const REGION_OFFSET_ZONE_B = [
       [113.5, 22.1], [113.6, 22.1], [113.6, 22.25], [113.5, 22.25]
     ];
 
-    // 特定的台湾地区多边形，代号 taiwan,china
-    const REGION_TAIWAN_CHINA = [
+    // 附加偏移范围 C。
+    const REGION_OFFSET_ZONE_C = [
       [119.3, 21.8], [122.5, 21.8], [122.5, 25.4], [119.3, 25.4]
     ];
 
@@ -667,9 +740,9 @@
       return inside;
     }
 
-    // 偏转判断：利用我们完整的多边形判定是否在中国境外
-    function outOfChina(lat, lng) {
-      return !isPointInPolygon(lng, lat, REGION_CHINA_BOUNDARY);
+    // 偏转判断：不在适用范围内时，保持原始坐标。
+    function outsideOffsetRegion(lat, lng) {
+      return !isPointInPolygon(lng, lat, REGION_OFFSET_BOUNDARY);
     }
 
     function transformLat(x, y) {
@@ -690,7 +763,7 @@
 
     // 主转换入口，输入原始 GPS WGS-84 [lng, lat]，返回纠偏后 GCJ-02 [lng, lat]
     function wgs84ToGcj02(lng, lat) {
-      if (outOfChina(lat, lng)) {
+      if (outsideOffsetRegion(lat, lng)) {
         return [lng, lat];
       }
       let dLat = transformLat(lng - 105.0, lat - 35.0);
@@ -714,7 +787,14 @@
     let watchId = null;            // Geolocation 的监听 ID
     let wakeLockInstance = null;   // Screen Wake Lock 实例
     let sensorActivated = false;   // [Bug7 修复] 防重入锁，防止按钮被疯狂点击
-    let lastIsChina = null;        // [Bug5 修复] 缓存上一次的境内/境外状态，避免不必要的 DOM 操作
+    let lastHasOffsetRegion = null; // 缓存上一次的偏移适用状态，避免不必要的 DOM 操作
+    let currentHeadingSource = 'WAITING';
+    let orientationListenerAttached = false;
+    const courseHeadingSpeedThreshold = 8; // km/h: 车载移动时优先使用 GPS course
+    const tapeStepDegrees = 15;
+    const tapeStepWidth = 44;
+    const tapeStartDegree = -360;
+    const tapeEndDegree = 720;
     
     // GPS 数据对象
     let currentData = {
@@ -726,10 +806,10 @@
       accuracy: null,
       speed: null,
       heading: null,
-      isChina: false,
-      isHongKongChina: false,
-      isMacauChina: false,
-      isTaiwanChina: false
+      hasOffsetRegion: false,
+      isOffsetZoneA: false,
+      isOffsetZoneB: false,
+      isOffsetZoneC: false
     };
 
     /**
@@ -737,12 +817,78 @@
      * 指南针数据处理与最短旋转插值
      * ==========================================
      */
-    function updateCompassRotation(rawHeading) {
+    function normalizeHeading(heading) {
+      let normalized = heading;
+      while (normalized < 0) normalized += 360;
+      while (normalized >= 360) normalized -= 360;
+      return normalized;
+    }
+
+    function buildCompassTape() {
+      const tape = document.getElementById('compassTape');
+      if (!tape || tape.childElementCount > 0) return;
+
+      for (let degree = tapeStartDegree; degree <= tapeEndDegree; degree += tapeStepDegrees) {
+        const normalized = normalizeHeading(degree);
+        const mark = document.createElement('div');
+        mark.className = 'tape-mark';
+
+        if (normalized % 30 === 0) mark.classList.add('major');
+        if (normalized === 0) mark.classList.add('north');
+
+        const label = document.createElement('span');
+        label.className = 'tape-label';
+        label.innerText = getTapeLabel(normalized);
+        mark.appendChild(label);
+        tape.appendChild(mark);
+      }
+    }
+
+    function getTapeLabel(heading) {
+      if (heading % 90 === 0) {
+        return ['N', 'E', 'S', 'W'][heading / 90];
+      }
+      if (heading % 45 === 0) {
+        return getDirectionText(heading);
+      }
+      if (heading % 30 === 0) {
+        return heading.toString().padStart(3, '0');
+      }
+      return '';
+    }
+
+    function preferCourseHeading() {
+      return currentData.heading !== null &&
+        currentData.speed !== null &&
+        currentData.speed >= courseHeadingSpeedThreshold;
+    }
+
+    function updateHeadingSource(source) {
+      currentHeadingSource = source;
+      const sourceBadge = document.getElementById('compassSource');
+      if (sourceBadge) sourceBadge.innerText = source;
+
+      const warnLabel = document.getElementById('compassWarning');
+      if (warnLabel) {
+        warnLabel.style.display = source === 'RELATIVE' ? 'block' : 'none';
+        warnLabel.innerText = source === 'RELATIVE' ? 'RELATIVE HEADING' : '';
+      }
+    }
+
+    function updateCompassRotation(rawHeading, source = 'MAG') {
+      if (!Number.isFinite(rawHeading)) return;
+
+      const sourceChanged = currentHeadingSource !== source;
+      const normalizedRawHeading = normalizeHeading(rawHeading);
+      if (sourceChanged) {
+        lastSmoothHeading = normalizedRawHeading;
+      }
+
       if (lastSmoothHeading === null) {
-        lastSmoothHeading = rawHeading;
+        lastSmoothHeading = normalizedRawHeading;
       } else {
         // 计算新老角度的差距
-        let diff = rawHeading - lastSmoothHeading;
+        let diff = normalizedRawHeading - lastSmoothHeading;
         // 将夹角约束在 -180 到 180 之间，寻找最短旋转路径
         while (diff < -180) diff += 360;
         while (diff > 180) diff -= 360;
@@ -751,20 +897,23 @@
       }
 
       // 将最终角度约束在 0 到 360
-      let heading = lastSmoothHeading;
-      while (heading < 0) heading += 360;
-      while (heading >= 360) heading -= 360;
+      const heading = normalizeHeading(lastSmoothHeading);
 
-      // 旋转 SVG 表盘 (逆时针旋转以反映真实磁北朝向)
-      const dial = document.getElementById('compassDial');
-      dial.style.transform = `rotate(${-heading}deg)`;
+      // 横向罗盘带以红色中心线为当前朝向参考。
+      const tape = document.getElementById('compassTape');
+      if (tape) {
+        const tapePosition = ((heading - tapeStartDegree) / tapeStepDegrees) * tapeStepWidth + tapeStepWidth / 2;
+        tape.style.transform = `translateX(${-tapePosition}px)`;
+      }
 
       // 更新数字显示
-      const formattedDegree = Math.round(heading).toString().padStart(3, '0') + '°';
+      const displayHeading = Math.round(heading) % 360;
+      const formattedDegree = displayHeading.toString().padStart(3, '0') + '°';
       document.getElementById('compassDegree').innerText = formattedDegree;
       
       // 更新八向文字
       document.getElementById('compassDirection').innerText = getDirectionText(heading);
+      updateHeadingSource(source);
     }
 
     // 将 0-360 映射为英文八向
@@ -784,20 +933,20 @@
         try {
           wakeLockInstance = await navigator.wakeLock.request('screen');
           const badge = document.getElementById('lockStatus');
-          badge.innerText = 'WAKE LOCK ACTIVE';
+          badge.innerText = 'WAKE ON';
           badge.classList.add('active');
 
           // 监听锁的自动释放 (如切后台)
           wakeLockInstance.addEventListener('release', () => {
             const b = document.getElementById('lockStatus');
-            b.innerText = 'WAKE LOCK RELEASED';
+            b.innerText = 'WAKE OFF';
             b.classList.remove('active');
           });
         } catch (err) {
           console.warn('Wake Lock request failed:', err);
         }
       } else {
-        document.getElementById('lockStatus').innerText = 'LOCK NOT SUPPORTED';
+        document.getElementById('lockStatus').innerText = 'NO WAKE';
       }
     }
 
@@ -814,8 +963,11 @@
      * ==========================================
      */
     function initLocationWatch() {
+      if (watchId !== null) return;
+
       if (!('geolocation' in navigator)) {
         showError('GEOLOCATION IS NOT SUPPORTED BY THIS DEVICE/BROWSER.');
+        resetActivationControl('Retry Sensors');
         return;
       }
 
@@ -832,17 +984,17 @@
           
           currentData.wgsLat = coords.latitude;
           currentData.wgsLng = coords.longitude;
-          currentData.altitude = coords.altitude;
-          currentData.accuracy = coords.accuracy;
+          currentData.altitude = Number.isFinite(coords.altitude) ? coords.altitude : null;
+          currentData.accuracy = Number.isFinite(coords.accuracy) ? coords.accuracy : null;
           // 速度 m/s 转换为 km/h
-          currentData.speed = coords.speed !== null ? (coords.speed * 3.6) : null;
-          currentData.heading = coords.heading;
+          currentData.speed = Number.isFinite(coords.speed) ? (coords.speed * 3.6) : null;
+          currentData.heading = Number.isFinite(coords.heading) ? coords.heading : null;
 
-          // 地理围栏检测
-          currentData.isHongKongChina = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_HONGKONG_CHINA);
-          currentData.isMacauChina = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_MACAU_CHINA);
-          currentData.isTaiwanChina = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_TAIWAN_CHINA);
-          currentData.isChina = currentData.isHongKongChina || currentData.isMacauChina || currentData.isTaiwanChina || isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_CHINA_BOUNDARY);
+          // 偏移适用范围检测
+          currentData.isOffsetZoneA = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_OFFSET_ZONE_A);
+          currentData.isOffsetZoneB = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_OFFSET_ZONE_B);
+          currentData.isOffsetZoneC = isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_OFFSET_ZONE_C);
+          currentData.hasOffsetRegion = currentData.isOffsetZoneA || currentData.isOffsetZoneB || currentData.isOffsetZoneC || isPointInPolygon(currentData.wgsLng, currentData.wgsLat, REGION_OFFSET_BOUNDARY);
 
           // GCJ-02 火星坐标计算
           const gcj = wgs84ToGcj02(currentData.wgsLng, currentData.wgsLat);
@@ -868,6 +1020,9 @@
               errMsg += 'UNKNOWN ERROR OCCURRED.';
           }
           showError(errMsg);
+          if (error.code === error.PERMISSION_DENIED) {
+            resetActivationControl('Retry Sensors');
+          }
         },
         options
       );
@@ -878,7 +1033,7 @@
      * [Bug5 修复] 渲染 UI 视图与按需地图跳转生成
      * 不再使用 innerHTML 重建整个地图按钮 DOM，
      * 改为直接更新已有元素的 href 属性，
-     * 仅在 isChina 状态切换时才执行按钮的显隐操作
+     * 仅在偏移适用状态切换时才执行按钮的显隐操作
      * ==========================================
      */
     function renderUIData() {
@@ -905,18 +1060,22 @@
 
       // 运动移动朝向 (非磁北朝向，仅在移动时有效)
       document.getElementById('gpsHeading').innerText = currentData.heading !== null 
-        ? `${Math.round(currentData.heading)}° ${getDirectionText(currentData.heading)}` 
+        ? `${Math.round(normalizeHeading(currentData.heading)) % 360}° ${getDirectionText(currentData.heading)}` 
         : 'N/A';
+
+      if (preferCourseHeading()) {
+        updateCompassRotation(currentData.heading, 'GPS COURSE');
+      }
 
       // 更新 WGS-84 地图按钮链接 (每次 GPS 更新只改 href，不重建 DOM)
       document.getElementById('gmapWgs').href = `https://www.google.com/maps/search/?api=1&query=${currentData.wgsLat},${currentData.wgsLng}`;
       document.getElementById('amapWgs').href = `https://maps.apple.com/?ll=${currentData.wgsLat},${currentData.wgsLng}&q=${currentData.wgsLat},${currentData.wgsLng}`;
 
-      // 智能中国区域处理 (包含大陆、港澳台)
+      // 适用范围内显示双坐标和额外地图入口。
       const gcjCard = document.getElementById('gcjCard');
       
-      if (currentData.isChina) {
-        // 在中国或边境区域，渲染 GCJ-02
+      if (currentData.hasOffsetRegion) {
+        // 在适用范围内渲染 GCJ-02
         gcjCard.classList.remove('hidden-card');
         
         const latDirGcj = currentData.gcjLat >= 0 ? 'N' : 'S';
@@ -928,27 +1087,45 @@
         document.getElementById('amapGcj').href = `https://maps.apple.com/?ll=${currentData.gcjLat},${currentData.gcjLng}&q=${currentData.gcjLat},${currentData.gcjLng}`;
         document.getElementById('gmapGcj').href = `https://www.google.com/maps/search/?api=1&query=${currentData.gcjLat},${currentData.gcjLng}`;
 
-        // 仅在状态从境外切换到境内时才执行 DOM class 操作
-        if (lastIsChina !== true) {
+        // 仅在状态切换时才执行 DOM class 操作
+        if (lastHasOffsetRegion !== true) {
           document.getElementById('amapGcj').classList.add('visible');
           document.getElementById('gmapGcj').classList.add('visible');
-          lastIsChina = true;
+          lastHasOffsetRegion = true;
         }
       } else {
-        // 在国外区域，隐藏 GCJ-02
+        // 不在适用范围内隐藏 GCJ-02
         gcjCard.classList.add('hidden-card');
 
-        // 仅在状态从境内切换到境外时才执行 DOM class 操作
-        if (lastIsChina !== false) {
+        // 仅在状态切换时才执行 DOM class 操作
+        if (lastHasOffsetRegion !== false) {
           document.getElementById('amapGcj').classList.remove('visible');
           document.getElementById('gmapGcj').classList.remove('visible');
-          lastIsChina = false;
+          lastHasOffsetRegion = false;
         }
       }
 
       // 更新时间戳
       const now = new Date();
       document.getElementById('updateTime').innerText = `LAST UPDATE: ${now.toTimeString().split(' ')[0]}`;
+    }
+
+    function resetActivationControl(label = 'Retry Sensors') {
+      sensorActivated = false;
+      const btn = document.getElementById('activateBtn');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = label;
+      }
+
+      const container = document.getElementById('activationContainer');
+      if (container) container.style.display = 'flex';
+    }
+
+    function attachOrientationListener(eventName, handler) {
+      if (orientationListenerAttached) return;
+      window.addEventListener(eventName, handler, true);
+      orientationListenerAttached = true;
     }
 
     /**
@@ -963,7 +1140,10 @@
 
       // 立即禁用按钮，防止重复点击
       const btn = document.getElementById('activateBtn');
-      if (btn) btn.disabled = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Starting...';
+      }
 
       // 隐藏激活按钮容器
       const container = document.getElementById('activationContainer');
@@ -974,23 +1154,25 @@
         DeviceOrientationEvent.requestPermission()
           .then((permission) => {
             if (permission === 'granted') {
-              window.addEventListener('deviceorientation', handleOrientation, true);
+              attachOrientationListener('deviceorientation', handleOrientation);
             } else {
               // [Bug1 修复] 错误提示改为纯英文
               showError('COMPASS PERMISSION DENIED. HEADING DATA WILL NOT BE AVAILABLE. PLEASE GRANT MOTION & ORIENTATION ACCESS IN YOUR BROWSER SETTINGS.');
+              resetActivationControl('Retry Compass');
             }
           })
           .catch((err) => {
             showError('SENSOR INITIALIZATION ERROR: ' + err.message);
+            resetActivationControl('Retry Sensors');
           });
       } else {
         // 安卓或非 iOS 13+
         if ('ondeviceorientationabsolute' in window) {
-          window.addEventListener('deviceorientationabsolute', handleOrientationAbsolute, true);
+          attachOrientationListener('deviceorientationabsolute', handleOrientationAbsolute);
         } else {
           // [Bug4 修复] 安卓降级：即使 absolute 不可用，也监听普通 deviceorientation
           // 并使用 alpha 值提供相对旋转反馈，同时显示警告标签
-          window.addEventListener('deviceorientation', handleOrientationFallback, true);
+          attachOrientationListener('deviceorientation', handleOrientationFallback);
           const warnLabel = document.getElementById('compassWarning');
           if (warnLabel) warnLabel.style.display = 'block';
         }
@@ -1003,18 +1185,22 @@
 
     // iOS 磁北朝向处理回调 (优先使用 webkitCompassHeading 获取绝对磁北)
     function handleOrientation(event) {
+      if (preferCourseHeading()) return;
+
       if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-        updateCompassRotation(event.webkitCompassHeading);
+        updateCompassRotation(event.webkitCompassHeading, 'MAG');
       } else if (event.absolute === true && event.alpha !== null) {
         // 回退逻辑：安卓设备如果支持绝对事件
-        updateCompassRotation(360 - event.alpha);
+        updateCompassRotation(360 - event.alpha, 'MAG');
       }
     }
 
     // 安卓绝对磁北朝向处理回调 (对 alpha 进行 360-alpha 取反)
     function handleOrientationAbsolute(event) {
+      if (preferCourseHeading()) return;
+
       if (event.alpha !== null) {
-        updateCompassRotation(360 - event.alpha);
+        updateCompassRotation(360 - event.alpha, 'MAG');
       }
     }
 
@@ -1024,8 +1210,10 @@
      * 用户界面上会显示 "RELATIVE HEADING" 警告标签，提示此方向非绝对磁北。
      */
     function handleOrientationFallback(event) {
+      if (preferCourseHeading()) return;
+
       if (event.alpha !== null) {
-        updateCompassRotation(360 - event.alpha);
+        updateCompassRotation(360 - event.alpha, 'RELATIVE');
       }
     }
 
@@ -1037,23 +1225,28 @@
     function copyText(text, btnId) {
       const btn = document.getElementById(btnId);
       const path = btn.querySelector('path');
+      const restorePath = () => {
+        path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
+        btn.classList.remove('success-flash', 'fail-flash');
+      };
+      const flashFailure = () => {
+        path.setAttribute('d', 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z');
+        btn.classList.add('fail-flash');
+        setTimeout(restorePath, 1500);
+      };
+
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+        flashFailure();
+        return;
+      }
+
       navigator.clipboard.writeText(text).then(() => {
         // 成功反馈：图标替换为打勾 (checkmark) SVG 路径，并触发发光动画
         path.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
         btn.classList.add('success-flash');
-        setTimeout(() => {
-          // 1.5秒后恢复为原始复制图标路径
-          path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
-          btn.classList.remove('success-flash');
-        }, 1500);
+        setTimeout(restorePath, 1500);
       }).catch(() => {
-        // 失败反馈：图标替换为打叉 (cross) 路径，并红光闪烁
-        path.setAttribute('d', 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z');
-        btn.classList.add('fail-flash');
-        setTimeout(() => {
-          path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
-          btn.classList.remove('fail-flash');
-        }, 1500);
+        flashFailure();
       });
     }
 
@@ -1069,6 +1262,9 @@
       const panel = document.getElementById('alertPanel');
       if (panel) panel.style.display = 'none';
     }
+
+    buildCompassTape();
+    updateCompassRotation(0, 'WAITING');
 
     // 事件绑定
     document.getElementById('activateBtn').addEventListener('click', startSensors);
@@ -1086,58 +1282,48 @@
     /**
      * ==========================================
      * 自动化回归与系统自测试模块
-     * [Bug3 修复] 新增漠河、喀什、钓鱼岛测试用例
+     * 覆盖主范围、附加范围、边界凸出区域与外部参考点。
      * ==========================================
      */
     function runSystemSelfTest() {
       console.log('--- STARTING SYSTEM SELF-TEST ---');
       const testCases = [
-        // 北京天安门：境内点
-        { name: 'Beijing (China Mainland)', lng: 116.397428, lat: 39.90923, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // 台北 101：台湾地区点 (taiwan,china)
-        { name: 'Taipei, Taiwan, China', lng: 121.564558, lat: 25.033964, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: true },
-        // 香港维多利亚港：香港特区点 (hongkong,china)
-        { name: 'Victoria Harbour, Hong Kong, China', lng: 114.173355, lat: 22.292104, expectChina: true, expectHK: true, expectMacau: false, expectTaiwan: false },
-        // 澳门大三巴：澳门特区点 (macau,china)
-        { name: 'Ruins of St. Paul, Macao, China', lng: 113.54089, lat: 22.19762, expectChina: true, expectHK: false, expectMacau: true, expectTaiwan: false },
-        // 南海九段线内部区域：境内点
-        { name: 'South China Sea Territorial Area', lng: 114.0, lat: 9.0, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // [Bug3 新增] 漠河（中国最北端，纬度 ~53.5°N）
-        { name: 'Mohe (Northernmost China)', lng: 122.37, lat: 53.48, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // [Bug3 新增] 喀什（中国最西端，经度 ~75.99°E）
-        { name: 'Kashgar (Westernmost China)', lng: 75.99, lat: 39.47, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // [Bug3 新增] 钓鱼岛 (约 123.47°E, 25.74°N)
-        { name: 'Diaoyu Islands (China Territorial)', lng: 123.47, lat: 25.74, expectChina: true, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // 英国伦敦大本钟：海外点
-        { name: 'London Big Ben (Outside)', lng: -0.1246, lat: 51.5007, expectChina: false, expectHK: false, expectMacau: false, expectTaiwan: false },
-        // 纽约自由女神：海外点
-        { name: 'New York Statue of Liberty (Outside)', lng: -74.0445, lat: 40.6892, expectChina: false, expectHK: false, expectMacau: false, expectTaiwan: false }
+        { name: 'Reference point A', lng: 116.397428, lat: 39.90923, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point B', lng: 121.564558, lat: 25.033964, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: true },
+        { name: 'Reference point C', lng: 114.173355, lat: 22.292104, expectRegion: true, expectZoneA: true, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point D', lng: 113.54089, lat: 22.19762, expectRegion: true, expectZoneA: false, expectZoneB: true, expectZoneC: false },
+        { name: 'Reference point E', lng: 114.0, lat: 9.0, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point F', lng: 122.37, lat: 53.48, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point G', lng: 75.99, lat: 39.47, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point H', lng: 123.47, lat: 25.74, expectRegion: true, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point I', lng: -0.1246, lat: 51.5007, expectRegion: false, expectZoneA: false, expectZoneB: false, expectZoneC: false },
+        { name: 'Reference point J', lng: -74.0445, lat: 40.6892, expectRegion: false, expectZoneA: false, expectZoneB: false, expectZoneC: false }
       ];
 
       let allPassed = true;
       let logMsg = 'SYSTEM TEST RESULTS:\n';
 
       testCases.forEach((tc) => {
-        const isHK = isPointInPolygon(tc.lng, tc.lat, REGION_HONGKONG_CHINA);
-        const isMacau = isPointInPolygon(tc.lng, tc.lat, REGION_MACAU_CHINA);
-        const isTaiwan = isPointInPolygon(tc.lng, tc.lat, REGION_TAIWAN_CHINA);
-        const isChina = isHK || isMacau || isTaiwan || isPointInPolygon(tc.lng, tc.lat, REGION_CHINA_BOUNDARY);
+        const isZoneA = isPointInPolygon(tc.lng, tc.lat, REGION_OFFSET_ZONE_A);
+        const isZoneB = isPointInPolygon(tc.lng, tc.lat, REGION_OFFSET_ZONE_B);
+        const isZoneC = isPointInPolygon(tc.lng, tc.lat, REGION_OFFSET_ZONE_C);
+        const hasRegion = isZoneA || isZoneB || isZoneC || isPointInPolygon(tc.lng, tc.lat, REGION_OFFSET_BOUNDARY);
 
         // 验证 GCJ-02 转换算法
         const gcj = wgs84ToGcj02(tc.lng, tc.lat);
         const hasOffset = (gcj[0] !== tc.lng || gcj[1] !== tc.lat);
-        const offsetOk = tc.expectChina ? hasOffset : !hasOffset;
+        const offsetOk = tc.expectRegion ? hasOffset : !hasOffset;
 
-        const casePassed = (isChina === tc.expectChina) && 
-                           (isHK === tc.expectHK) && 
-                           (isMacau === tc.expectMacau) && 
-                           (isTaiwan === tc.expectTaiwan) &&
+        const casePassed = (hasRegion === tc.expectRegion) &&
+                           (isZoneA === tc.expectZoneA) &&
+                           (isZoneB === tc.expectZoneB) &&
+                           (isZoneC === tc.expectZoneC) &&
                            offsetOk;
 
         if (casePassed) {
           logMsg += `✓ ${tc.name}: PASSED\n`;
         } else {
-          logMsg += `✗ ${tc.name}: FAILED (China: ${isChina}, HK: ${isHK}, Macau: ${isMacau}, Taiwan: ${isTaiwan}, OffsetOk: ${offsetOk})\n`;
+          logMsg += `✗ ${tc.name}: FAILED (Region: ${hasRegion}, ZoneA: ${isZoneA}, ZoneB: ${isZoneB}, ZoneC: ${isZoneC}, OffsetOk: ${offsetOk})\n`;
           allPassed = false;
         }
       });

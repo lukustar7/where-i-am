@@ -6,7 +6,7 @@
  * 采用 Stale-While-Revalidate (缓存优先，后台异步刷新) 机制
  */
 
-const CACHE_NAME = 'tactical-gps-beta-v2';
+const CACHE_NAME = 'where-i-am-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -42,6 +42,15 @@ self.addEventListener('activate', (e) => {
 
 // Stale-While-Revalidate 离线拦截策略
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
+  const requestUrl = new URL(e.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
