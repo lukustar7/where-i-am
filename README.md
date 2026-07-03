@@ -15,3 +15,5 @@ An offline-capable, single-file H5 GPS compass for mobile browsers.
 ## Usage
 
 Serve via HTTPS. Open in browser and tap "Start Sensors".
+
+<!-- Trigger build: 2026-07-03 -->
