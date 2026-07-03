@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-07-03
+
+### Added
+
+- Added an iOS-style circular compass with fixed PHONE heading and separate COURSE marker so two heading sources remain visible in one view.
+
+### Changed
+
+- Changed heading arbitration so GPS course no longer replaces PHONE heading above 8 km/h, preserving live device direction during vehicle use.
+- Changed the fourth metric from Course to Mode to remove one duplicated heading readout and expose PHONE, COURSE, or DUAL state directly.
+
+### Fixed
+
+- Bumped the offline cache namespace to `where-i-am-v4` and made page navigation network-first so the redesigned compass refreshes after deployment while preserving offline fallback.
+
 ## [0.1.0] - 2026-07-02
 
 ### Added

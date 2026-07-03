@@ -6,10 +6,11 @@
  * 采用 Stale-While-Revalidate (缓存优先，后台异步刷新) 机制
  */
 
-const CACHE_NAME = 'where-i-am-v3';
+const CACHE_NAME = 'where-i-am-v4';
+const APP_SHELL = './index.html';
 const ASSETS = [
   './',
-  './index.html',
+  APP_SHELL,
   './manifest.json',
   './icon.jpg'
 ];
@@ -48,6 +49,25 @@ self.addEventListener('fetch', (e) => {
 
   const requestUrl = new URL(e.request.url);
   if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then((networkResponse) => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(APP_SHELL, responseToCache);
+          });
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(e.request).then((cachedResponse) => {
+            return cachedResponse || caches.match(APP_SHELL);
+          });
+        })
+    );
     return;
   }
 

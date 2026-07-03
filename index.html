@@ -178,139 +178,169 @@
     }
 
     .compass-container {
-      height: 188px;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 16px 0 13px;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+        #000000;
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .compass-face {
+      position: relative;
+      width: min(100%, clamp(248px, 42svh, 342px));
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .compass-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      display: block;
+    }
+
+    .compass-dial,
+    .course-marker {
+      transform-box: view-box;
+      transform-origin: 160px 160px;
+      will-change: transform;
+      transition: transform 120ms linear, opacity 160ms ease;
+    }
+
+    .dial-tick {
+      stroke: rgba(245, 245, 247, 0.78);
+      stroke-linecap: round;
+    }
+
+    .dial-tick.medium {
+      stroke: rgba(245, 245, 247, 0.88);
+    }
+
+    .dial-tick.major {
+      stroke: #f5f5f7;
+    }
+
+    .degree-label {
+      fill: #f5f5f7;
+      font-size: 13px;
+      font-weight: 680;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .cardinal-label {
+      fill: #f5f5f7;
+      font-size: 30px;
+      font-weight: 760;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .north-marker {
+      fill: var(--accent-red);
+      filter: drop-shadow(0 0 5px rgba(255, 69, 58, 0.58));
+    }
+
+    .course-marker {
+      opacity: 1;
+      color: var(--accent-blue);
+      filter: drop-shadow(0 0 7px rgba(10, 132, 255, 0.62));
+    }
+
+    .course-marker.hidden {
+      opacity: 0;
+    }
+
+    .course-line {
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .course-tip {
+      fill: currentColor;
+    }
+
+    .phone-lubber {
+      stroke: #f5f5f7;
+      stroke-width: 4;
+      stroke-linecap: square;
+      filter: drop-shadow(0 0 6px rgba(245, 245, 247, 0.38));
+    }
+
+    .center-disc {
+      fill: rgba(255, 255, 255, 0.12);
+    }
+
+    .crosshair-line {
+      stroke: rgba(245, 245, 247, 0.54);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .crosshair-fine {
+      stroke: rgba(245, 245, 247, 0.74);
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .compass-readouts {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 10px;
+      align-items: end;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 10px;
     }
 
     .heading-readout {
+      min-width: 0;
       display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px;
-      padding: 0 16px;
+      flex-direction: column;
+      gap: 4px;
       line-height: 1;
     }
 
-    .compass-degree {
-      font-size: 58px;
-      font-weight: 720;
-      letter-spacing: 0;
-      color: var(--text-main);
-      line-height: 0.95;
+    .heading-label {
+      font-size: 10px;
+      font-weight: 680;
+      color: var(--text-dim);
+      line-height: 1;
     }
 
-    .compass-direction {
-      min-width: 34px;
-      font-size: 18px;
-      font-weight: 620;
-      color: var(--text-muted);
-      letter-spacing: 0;
+    .heading-value {
+      color: var(--text-main);
+      font-size: 28px;
+      font-weight: 740;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .heading-readout.secondary .heading-value {
+      color: var(--accent-blue);
+      font-size: 22px;
+      font-weight: 700;
     }
 
     .compass-warning {
-      min-height: 13px;
-      text-align: center;
+      min-height: 12px;
+      text-align: right;
       font-size: 10px;
       font-weight: 650;
       color: var(--accent-amber);
       letter-spacing: 0;
       display: none;
-    }
-
-    .compass-tape-window {
-      height: 82px;
-      position: relative;
-      overflow: hidden;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(0, 0, 0, 0.18);
-      mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%);
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%);
-    }
-
-    .compass-tape {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      height: 82px;
-      display: flex;
-      align-items: stretch;
-      will-change: transform;
-      transition: transform 120ms linear;
-    }
-
-    .tape-mark {
-      width: 44px;
-      height: 82px;
-      flex: 0 0 44px;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding-bottom: 8px;
-    }
-
-    .tape-mark::before {
-      content: "";
-      position: absolute;
-      top: 12px;
-      left: 50%;
-      width: 1px;
-      height: 15px;
-      background: rgba(245, 245, 247, 0.58);
-      transform: translateX(-50%);
-    }
-
-    .tape-mark.major::before {
-      height: 28px;
-      background: rgba(245, 245, 247, 0.9);
-    }
-
-    .tape-mark.north::before {
-      width: 2px;
-      background: var(--accent-red);
-      box-shadow: 0 0 14px rgba(255, 69, 58, 0.58);
-    }
-
-    .tape-label {
-      font-size: 12px;
-      font-weight: 650;
-      color: rgba(245, 245, 247, 0.74);
       line-height: 1;
-    }
-
-    .tape-mark.north .tape-label {
-      color: var(--accent-red);
-    }
-
-    .compass-pointer {
-      position: absolute;
-      left: 50%;
-      bottom: 13px;
-      width: 2px;
-      height: 72px;
-      transform: translateX(-50%);
-      background: var(--accent-red);
-      box-shadow: 0 0 18px rgba(255, 69, 58, 0.55);
-      z-index: 2;
-    }
-
-    .compass-pointer::before {
-      content: "";
-      position: absolute;
-      top: -6px;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-left: 7px solid transparent;
-      border-right: 7px solid transparent;
-      border-top: 11px solid var(--accent-red);
-      transform: translateX(-50%);
     }
 
     .metrics-grid {
@@ -333,6 +363,11 @@
       overflow: hidden;
     }
 
+    .metric {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
     .data-label {
       font-size: 10px;
       font-weight: 600;
@@ -341,7 +376,7 @@
     }
 
     .data-value {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 650;
       color: var(--text-main);
       overflow: hidden;
@@ -514,8 +549,17 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .compass-degree {
-        font-size: 52px;
+      .compass-readouts {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .heading-value {
+        font-size: 25px;
+      }
+
+      .heading-readout.secondary .heading-value {
+        font-size: 20px;
       }
     }
 
@@ -530,12 +574,29 @@
       }
 
       .compass-container {
-        height: 166px;
-        padding-top: 12px;
+        gap: 8px;
+        padding-top: 10px;
+        padding-bottom: 12px;
       }
 
-      .compass-degree {
-        font-size: 50px;
+      .compass-face {
+        width: min(100%, 264px);
+      }
+
+      .cardinal-label {
+        font-size: 27px;
+      }
+
+      .degree-label {
+        font-size: 12px;
+      }
+
+      .heading-value {
+        font-size: 24px;
+      }
+
+      .heading-readout.secondary .heading-value {
+        font-size: 19px;
       }
 
       .metric,
@@ -544,8 +605,31 @@
         padding: 7px 9px;
       }
 
+      .metric {
+        padding-left: 7px;
+        padding-right: 7px;
+      }
+
       .map-btn {
         min-height: 36px;
+      }
+    }
+
+    @media (max-height: 690px) {
+      .compass-face {
+        width: min(100%, 230px);
+      }
+
+      .compass-readouts {
+        padding-top: 8px;
+      }
+
+      .heading-value {
+        font-size: 22px;
+      }
+
+      .heading-readout.secondary .heading-value {
+        font-size: 18px;
       }
     }
   </style>
@@ -571,17 +655,36 @@
     <div id="alertPanel" class="alert-panel"></div>
 
     <section class="compass-container glass-panel" aria-label="Compass">
-      <div>
-        <div class="heading-readout">
-          <div id="compassDegree" class="compass-degree">000°</div>
-          <div id="compassDirection" class="compass-direction">N</div>
+      <div class="compass-face">
+        <svg class="compass-svg" viewBox="0 0 320 320" role="img" aria-label="Dual heading compass">
+          <g id="compassDial" class="compass-dial">
+            <g id="dialTicks"></g>
+            <g id="dialLabels"></g>
+            <polygon class="north-marker" points="160,34 153,48 167,48"></polygon>
+          </g>
+          <g id="courseMarker" class="course-marker hidden">
+            <line class="course-line" x1="160" y1="160" x2="160" y2="48"></line>
+            <path class="course-tip" d="M160 34 L151 52 L169 52 Z"></path>
+          </g>
+          <line class="phone-lubber" x1="160" y1="20" x2="160" y2="70"></line>
+          <circle class="center-disc" cx="160" cy="160" r="38"></circle>
+          <line class="crosshair-line" x1="98" y1="160" x2="222" y2="160"></line>
+          <line class="crosshair-line" x1="160" y1="98" x2="160" y2="222"></line>
+          <line class="crosshair-fine" x1="142" y1="172" x2="178" y2="172"></line>
+          <line class="crosshair-fine" x1="160" y1="142" x2="160" y2="190"></line>
+        </svg>
+      </div>
+      <div class="compass-readouts">
+        <div class="heading-readout primary">
+          <span class="heading-label">PHONE</span>
+          <span id="phoneHeadingValue" class="heading-value">000° N</span>
         </div>
-        <div id="compassWarning" class="compass-warning">RELATIVE HEADING</div>
+        <div class="heading-readout secondary">
+          <span class="heading-label">COURSE</span>
+          <span id="courseHeadingValue" class="heading-value">N/A</span>
+          <span id="compassWarning" class="compass-warning">RELATIVE HEADING</span>
+        </div>
       </div>
-      <div class="compass-tape-window">
-        <div id="compassTape" class="compass-tape"></div>
-      </div>
-      <div class="compass-pointer" aria-hidden="true"></div>
     </section>
 
     <section class="metrics-grid" aria-label="GPS metrics">
@@ -598,8 +701,8 @@
         <span id="gpsSpd" class="data-value">0.0 km/h</span>
       </div>
       <div class="metric">
-        <span class="data-label">Course</span>
-        <span id="gpsHeading" class="data-value">N/A</span>
+        <span class="data-label">Mode</span>
+        <span id="gpsMode" class="data-value">WAITING</span>
       </div>
     </section>
 
@@ -782,19 +885,17 @@
      * 核心应用变量与过滤器状态
      * ==========================================
      */
-    let lastSmoothHeading = null; // 指南针平滑缓存
-    const filterAlpha = 0.15;      // 低通滤波平滑权重系数 (0 到 1 之间)
+    let lastSmoothPhoneHeading = null; // 手机真实指向的平滑缓存
+    let phoneHeading = null;           // 当前手机顶部朝向，用于驱动主圆形指南针
+    let courseHeading = null;          // 当前 GPS 运动方向，用于驱动第二指示针
+    const filterAlpha = 0.15;          // 低通滤波平滑权重系数 (0 到 1 之间)
     let watchId = null;            // Geolocation 的监听 ID
     let wakeLockInstance = null;   // Screen Wake Lock 实例
     let sensorActivated = false;   // [Bug7 修复] 防重入锁，防止按钮被疯狂点击
     let lastHasOffsetRegion = null; // 缓存上一次的偏移适用状态，避免不必要的 DOM 操作
     let currentHeadingSource = 'WAITING';
     let orientationListenerAttached = false;
-    const courseHeadingSpeedThreshold = 8; // km/h: 车载移动时优先使用 GPS course
-    const tapeStepDegrees = 15;
-    const tapeStepWidth = 44;
-    const tapeStartDegree = -360;
-    const tapeEndDegree = 720;
+    const courseHeadingSpeedThreshold = 8; // km/h: 速度达到该阈值后才认为 GPS 运动方向可靠
     
     // GPS 数据对象
     let currentData = {
@@ -814,7 +915,7 @@
 
     /**
      * ==========================================
-     * 指南针数据处理与最短旋转插值
+     * 圆形指南针数据处理、表盘生成与双朝向渲染
      * ==========================================
      */
     function normalizeHeading(heading) {
@@ -824,43 +925,76 @@
       return normalized;
     }
 
-    function buildCompassTape() {
-      const tape = document.getElementById('compassTape');
-      if (!tape || tape.childElementCount > 0) return;
-
-      for (let degree = tapeStartDegree; degree <= tapeEndDegree; degree += tapeStepDegrees) {
-        const normalized = normalizeHeading(degree);
-        const mark = document.createElement('div');
-        mark.className = 'tape-mark';
-
-        if (normalized % 30 === 0) mark.classList.add('major');
-        if (normalized === 0) mark.classList.add('north');
-
-        const label = document.createElement('span');
-        label.className = 'tape-label';
-        label.innerText = getTapeLabel(normalized);
-        mark.appendChild(label);
-        tape.appendChild(mark);
-      }
-    }
-
-    function getTapeLabel(heading) {
-      if (heading % 90 === 0) {
-        return ['N', 'E', 'S', 'W'][heading / 90];
-      }
-      if (heading % 45 === 0) {
-        return getDirectionText(heading);
-      }
-      if (heading % 30 === 0) {
-        return heading.toString().padStart(3, '0');
-      }
-      return '';
-    }
-
-    function preferCourseHeading() {
+    function isReliableCourseHeading() {
       return currentData.heading !== null &&
         currentData.speed !== null &&
         currentData.speed >= courseHeadingSpeedThreshold;
+    }
+
+    function createSvgElement(tagName, attrs) {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+      Object.entries(attrs).forEach(([key, value]) => {
+        element.setAttribute(key, value);
+      });
+      return element;
+    }
+
+    function getDialPoint(center, radius, degree) {
+      const radian = degree * Math.PI / 180;
+      return {
+        x: center + Math.sin(radian) * radius,
+        y: center - Math.cos(radian) * radius
+      };
+    }
+
+    function buildCompassDial() {
+      const tickLayer = document.getElementById('dialTicks');
+      const labelLayer = document.getElementById('dialLabels');
+      if (!tickLayer || !labelLayer || tickLayer.childElementCount > 0) return;
+
+      const center = 160;
+      const outerRadius = 132;
+
+      // 2 度一个短刻度，30 度一个长刻度，形成接近 iOS Compass 的密集刻度圈。
+      for (let degree = 0; degree < 360; degree += 2) {
+        const isMajor = degree % 30 === 0;
+        const isMedium = !isMajor && degree % 10 === 0;
+        const innerRadius = outerRadius - (isMajor ? 22 : (isMedium ? 16 : 10));
+        const outerPoint = getDialPoint(center, outerRadius, degree);
+        const innerPoint = getDialPoint(center, innerRadius, degree);
+        const tick = createSvgElement('line', {
+          x1: outerPoint.x.toFixed(2),
+          y1: outerPoint.y.toFixed(2),
+          x2: innerPoint.x.toFixed(2),
+          y2: innerPoint.y.toFixed(2),
+          class: `dial-tick${isMajor ? ' major' : ''}${isMedium ? ' medium' : ''}`,
+          'stroke-width': isMajor ? '2.2' : (isMedium ? '1.6' : '1.1')
+        });
+        tickLayer.appendChild(tick);
+      }
+
+      for (let degree = 0; degree < 360; degree += 30) {
+        const labelPoint = getDialPoint(center, 150, degree);
+        const label = createSvgElement('text', {
+          x: labelPoint.x.toFixed(2),
+          y: labelPoint.y.toFixed(2),
+          class: 'degree-label'
+        });
+        label.textContent = degree.toString();
+        labelLayer.appendChild(label);
+      }
+
+      ['N', 'E', 'S', 'W'].forEach((labelText, index) => {
+        const degree = index * 90;
+        const labelPoint = getDialPoint(center, 78, degree);
+        const label = createSvgElement('text', {
+          x: labelPoint.x.toFixed(2),
+          y: labelPoint.y.toFixed(2),
+          class: 'cardinal-label'
+        });
+        label.textContent = labelText;
+        labelLayer.appendChild(label);
+      });
     }
 
     function updateHeadingSource(source) {
@@ -875,45 +1009,80 @@
       }
     }
 
-    function updateCompassRotation(rawHeading, source = 'MAG') {
+    function formatHeadingValue(rawHeading) {
+      if (!Number.isFinite(rawHeading)) return 'N/A';
+      const displayHeading = Math.round(normalizeHeading(rawHeading)) % 360;
+      return `${displayHeading.toString().padStart(3, '0')}° ${getDirectionText(rawHeading)}`;
+    }
+
+    function updatePhoneHeading(rawHeading, source = 'MAG') {
       if (!Number.isFinite(rawHeading)) return;
 
       const sourceChanged = currentHeadingSource !== source;
       const normalizedRawHeading = normalizeHeading(rawHeading);
       if (sourceChanged) {
-        lastSmoothHeading = normalizedRawHeading;
+        lastSmoothPhoneHeading = normalizedRawHeading;
       }
 
-      if (lastSmoothHeading === null) {
-        lastSmoothHeading = normalizedRawHeading;
+      if (lastSmoothPhoneHeading === null) {
+        lastSmoothPhoneHeading = normalizedRawHeading;
       } else {
         // 计算新老角度的差距
-        let diff = normalizedRawHeading - lastSmoothHeading;
+        let diff = normalizedRawHeading - lastSmoothPhoneHeading;
         // 将夹角约束在 -180 到 180 之间，寻找最短旋转路径
         while (diff < -180) diff += 360;
         while (diff > 180) diff -= 360;
         // 一阶指数低通平滑滤波更新
-        lastSmoothHeading = lastSmoothHeading + filterAlpha * diff;
+        lastSmoothPhoneHeading = lastSmoothPhoneHeading + filterAlpha * diff;
       }
 
-      // 将最终角度约束在 0 到 360
-      const heading = normalizeHeading(lastSmoothHeading);
-
-      // 横向罗盘带以红色中心线为当前朝向参考。
-      const tape = document.getElementById('compassTape');
-      if (tape) {
-        const tapePosition = ((heading - tapeStartDegree) / tapeStepDegrees) * tapeStepWidth + tapeStepWidth / 2;
-        tape.style.transform = `translateX(${-tapePosition}px)`;
-      }
-
-      // 更新数字显示
-      const displayHeading = Math.round(heading) % 360;
-      const formattedDegree = displayHeading.toString().padStart(3, '0') + '°';
-      document.getElementById('compassDegree').innerText = formattedDegree;
-      
-      // 更新八向文字
-      document.getElementById('compassDirection').innerText = getDirectionText(heading);
+      phoneHeading = normalizeHeading(lastSmoothPhoneHeading);
       updateHeadingSource(source);
+      renderCompassHeading();
+    }
+
+    function updateCourseHeading(rawHeading) {
+      courseHeading = Number.isFinite(rawHeading) ? normalizeHeading(rawHeading) : null;
+      renderCompassHeading();
+    }
+
+    function renderCompassHeading() {
+      const dial = document.getElementById('compassDial');
+      const courseMarker = document.getElementById('courseMarker');
+      const phoneValue = document.getElementById('phoneHeadingValue');
+      const courseValue = document.getElementById('courseHeadingValue');
+      const modeValue = document.getElementById('gpsMode');
+      const displayPhoneHeading = phoneHeading !== null ? phoneHeading : 0;
+
+      if (dial) {
+        // 表盘反向旋转，让手机顶部方向永远对准上方白色准线。
+        dial.style.transform = `rotate(${-displayPhoneHeading}deg)`;
+      }
+
+      if (courseMarker) {
+        if (courseHeading === null) {
+          courseMarker.classList.add('hidden');
+        } else {
+          const relativeCourse = normalizeHeading(courseHeading - displayPhoneHeading);
+          courseMarker.style.transform = `rotate(${relativeCourse}deg)`;
+          courseMarker.classList.remove('hidden');
+        }
+      }
+
+      if (phoneValue) phoneValue.innerText = phoneHeading !== null ? formatHeadingValue(phoneHeading) : 'N/A';
+      if (courseValue) courseValue.innerText = courseHeading !== null ? formatHeadingValue(courseHeading) : 'N/A';
+
+      if (modeValue) {
+        if (phoneHeading !== null && courseHeading !== null) {
+          modeValue.innerText = 'DUAL';
+        } else if (phoneHeading !== null) {
+          modeValue.innerText = currentHeadingSource === 'RELATIVE' ? 'REL' : 'PHONE';
+        } else if (courseHeading !== null) {
+          modeValue.innerText = 'COURSE';
+        } else {
+          modeValue.innerText = 'WAITING';
+        }
+      }
     }
 
     // 将 0-360 映射为英文八向
@@ -1058,14 +1227,8 @@
         ? `${currentData.speed.toFixed(1)} km/h` 
         : '0.0 km/h';
 
-      // 运动移动朝向 (非磁北朝向，仅在移动时有效)
-      document.getElementById('gpsHeading').innerText = currentData.heading !== null 
-        ? `${Math.round(normalizeHeading(currentData.heading)) % 360}° ${getDirectionText(currentData.heading)}` 
-        : 'N/A';
-
-      if (preferCourseHeading()) {
-        updateCompassRotation(currentData.heading, 'GPS COURSE');
-      }
+      // GPS 运动方向只作为第二指示针；主指南针始终保留手机自身指向。
+      updateCourseHeading(isReliableCourseHeading() ? currentData.heading : null);
 
       // 更新 WGS-84 地图按钮链接 (每次 GPS 更新只改 href，不重建 DOM)
       document.getElementById('gmapWgs').href = `https://www.google.com/maps/search/?api=1&query=${currentData.wgsLat},${currentData.wgsLng}`;
@@ -1185,22 +1348,18 @@
 
     // iOS 磁北朝向处理回调 (优先使用 webkitCompassHeading 获取绝对磁北)
     function handleOrientation(event) {
-      if (preferCourseHeading()) return;
-
       if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-        updateCompassRotation(event.webkitCompassHeading, 'MAG');
+        updatePhoneHeading(event.webkitCompassHeading, 'MAG');
       } else if (event.absolute === true && event.alpha !== null) {
         // 回退逻辑：安卓设备如果支持绝对事件
-        updateCompassRotation(360 - event.alpha, 'MAG');
+        updatePhoneHeading(360 - event.alpha, 'MAG');
       }
     }
 
     // 安卓绝对磁北朝向处理回调 (对 alpha 进行 360-alpha 取反)
     function handleOrientationAbsolute(event) {
-      if (preferCourseHeading()) return;
-
       if (event.alpha !== null) {
-        updateCompassRotation(360 - event.alpha, 'MAG');
+        updatePhoneHeading(360 - event.alpha, 'MAG');
       }
     }
 
@@ -1210,10 +1369,8 @@
      * 用户界面上会显示 "RELATIVE HEADING" 警告标签，提示此方向非绝对磁北。
      */
     function handleOrientationFallback(event) {
-      if (preferCourseHeading()) return;
-
       if (event.alpha !== null) {
-        updateCompassRotation(360 - event.alpha, 'RELATIVE');
+        updatePhoneHeading(360 - event.alpha, 'RELATIVE');
       }
     }
 
@@ -1263,8 +1420,9 @@
       if (panel) panel.style.display = 'none';
     }
 
-    buildCompassTape();
-    updateCompassRotation(0, 'WAITING');
+    buildCompassDial();
+    updateHeadingSource('WAITING');
+    renderCompassHeading();
 
     // 事件绑定
     document.getElementById('activateBtn').addEventListener('click', startSensors);
