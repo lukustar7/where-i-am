@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Bumped the offline cache namespace to `where-i-am-v4` and made page navigation network-first so the redesigned compass refreshes after deployment while preserving offline fallback.
+- Fixed mobile browser SVG rotation reliability by switching the compass dial and COURSE marker to native SVG transform attributes.
+- Removed the residual inner level-guide line from the compass center to keep the display focused on heading only.
+- Bumped the offline cache namespace to `where-i-am-v5` so this sensor rendering fix is picked up after deployment.
 
 ## [0.1.0] - 2026-07-02
 
