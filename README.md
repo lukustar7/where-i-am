@@ -6,7 +6,7 @@ An offline-capable, single-file H5 GPS compass for mobile browsers.
 
 ## Features
 
-- **Compass**: Displays an iOS-style circular compass with independent PHONE and COURSE indicators.
+- **Compass**: Displays an iOS-style circular compass with automatic PHONE, DUAL, COURSE, and CHECKING modes.
 - **GPS Metrics**: Tracks coordinates, altitude, accuracy, speed, and heading mode in one mobile viewport.
 - **Offset Coordinates**: Shows WGS-84 and GCJ-02 with four map links when the configured boundary rule applies.
 - **Zero Dependencies**: Pure HTML, inline CSS, and SVG assets for offline reliability.

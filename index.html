@@ -359,11 +359,40 @@
       padding-right: 8px;
     }
 
+    .metric-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-width: 0;
+    }
+
     .data-label {
       font-size: 10px;
       font-weight: 600;
       color: var(--text-dim);
       line-height: 1;
+    }
+
+    .info-icon-btn {
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .info-icon-btn:active {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(0.94);
     }
 
     .data-value {
@@ -382,6 +411,73 @@
 
     .data-value.active-green {
       color: var(--accent-green);
+    }
+
+    .mode-popover {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 12px;
+      display: none;
+      z-index: 20;
+    }
+
+    .mode-popover.visible {
+      display: block;
+    }
+
+    .popover-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .popover-title {
+      font-size: 13px;
+      font-weight: 720;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .popover-close-btn {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .mode-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .mode-name {
+      color: var(--text-main);
+      font-weight: 720;
+    }
+
+    .mode-desc {
+      color: var(--text-muted);
+      min-width: 0;
     }
 
     .coordinates-panel,
@@ -665,11 +761,11 @@
       </div>
       <div class="compass-readouts">
         <div class="heading-readout primary">
-          <span class="heading-label">PHONE</span>
+          <span id="primaryHeadingLabel" class="heading-label">PHONE</span>
           <span id="phoneHeadingValue" class="heading-value">000° N</span>
         </div>
         <div class="heading-readout secondary">
-          <span class="heading-label">COURSE</span>
+          <span id="secondaryHeadingLabel" class="heading-label">COURSE</span>
           <span id="courseHeadingValue" class="heading-value">N/A</span>
           <span id="compassWarning" class="compass-warning">RELATIVE HEADING</span>
         </div>
@@ -690,10 +786,38 @@
         <span id="gpsSpd" class="data-value">0.0 km/h</span>
       </div>
       <div class="metric">
-        <span class="data-label">Mode</span>
+        <div class="metric-title-row">
+          <span class="data-label">Mode</span>
+          <button id="modeInfoBtn" class="info-icon-btn" type="button" aria-label="Explain heading modes" aria-expanded="false" aria-controls="modePopover">i</button>
+        </div>
         <span id="gpsMode" class="data-value">WAITING</span>
       </div>
     </section>
+
+    <div id="modePopover" class="mode-popover glass-panel" role="dialog" aria-labelledby="modePopoverTitle">
+      <div class="popover-title-row">
+        <div id="modePopoverTitle" class="popover-title">Heading Modes</div>
+        <button id="modePopoverClose" class="popover-close-btn" type="button" aria-label="Close heading mode explanation">×</button>
+      </div>
+      <div class="mode-list">
+        <div class="mode-row">
+          <div class="mode-name">PHONE</div>
+          <div class="mode-desc">Device heading is the main signal.</div>
+        </div>
+        <div class="mode-row">
+          <div class="mode-name">DUAL</div>
+          <div class="mode-desc">Device heading and moving course are both visible.</div>
+        </div>
+        <div class="mode-row">
+          <div class="mode-name">COURSE</div>
+          <div class="mode-desc">Moving course is trusted; device heading appears linked.</div>
+        </div>
+        <div class="mode-row">
+          <div class="mode-name">CHECKING</div>
+          <div class="mode-desc">Comparing heading sources before switching mode.</div>
+        </div>
+      </div>
+    </div>
 
     <section class="coordinates-panel glass-panel" aria-label="Coordinates">
       <div class="coordinate-card">
@@ -883,8 +1007,18 @@
     let sensorActivated = false;   // [Bug7 修复] 防重入锁，防止按钮被疯狂点击
     let lastHasOffsetRegion = null; // 缓存上一次的偏移适用状态，避免不必要的 DOM 操作
     let currentHeadingSource = 'WAITING';
-    let orientationListenerAttached = false;
+    let headingMode = 'WAITING';
+    let courseLinkedSince = null;
+    let courseDivergedSince = null;
+    let lastPhoneHeadingUpdateAt = 0;
+    let orientationFallbackTimer = null;
+    const orientationListenersAttached = new Set();
     const courseHeadingSpeedThreshold = 8; // km/h: 速度达到该阈值后才认为 GPS 运动方向可靠
+    const courseLinkedDeltaThreshold = 5;  // 度：高速下两套方向足够接近时，认为手机方向可能被行进方向吸附
+    const courseDualDeltaThreshold = 12;   // 度：高速下两套方向拉开后，认为可以显示双方向
+    const courseModeConfirmMs = 1800;      // 毫秒：连续贴合一段时间后再切 COURSE，避免瞬间误判
+    const dualModeConfirmMs = 1000;        // 毫秒：连续分离一段时间后再切 DUAL，避免状态抖动
+    const orientationFallbackDelayMs = 2200; // 毫秒：首选方向事件无数据时，补挂相对方向监听
     
     // GPS 数据对象
     let currentData = {
@@ -918,6 +1052,57 @@
       return currentData.heading !== null &&
         currentData.speed !== null &&
         currentData.speed >= courseHeadingSpeedThreshold;
+    }
+
+    function getHeadingDelta(a, b) {
+      const diff = Math.abs(normalizeHeading(a) - normalizeHeading(b));
+      return Math.min(diff, 360 - diff);
+    }
+
+    function resetHeadingModeTimers() {
+      courseLinkedSince = null;
+      courseDivergedSince = null;
+    }
+
+    function resolveHeadingMode() {
+      const hasPhone = phoneHeading !== null;
+      const hasCourse = courseHeading !== null;
+      const movingFast = currentData.speed !== null && currentData.speed >= courseHeadingSpeedThreshold;
+
+      if (!hasPhone && !hasCourse) {
+        resetHeadingModeTimers();
+        return 'WAITING';
+      }
+
+      if (!hasCourse || !movingFast) {
+        resetHeadingModeTimers();
+        return hasPhone ? 'PHONE' : 'WAITING';
+      }
+
+      if (!hasPhone) {
+        resetHeadingModeTimers();
+        return 'COURSE';
+      }
+
+      const now = Date.now();
+      const delta = getHeadingDelta(phoneHeading, courseHeading);
+
+      if (delta <= courseLinkedDeltaThreshold) {
+        if (courseLinkedSince === null) courseLinkedSince = now;
+        courseDivergedSince = null;
+        if (now - courseLinkedSince >= courseModeConfirmMs) return 'COURSE';
+        return headingMode === 'COURSE' ? 'COURSE' : 'CHECKING';
+      }
+
+      if (delta >= courseDualDeltaThreshold) {
+        if (courseDivergedSince === null) courseDivergedSince = now;
+        courseLinkedSince = null;
+        if (now - courseDivergedSince >= dualModeConfirmMs) return 'DUAL';
+        return headingMode === 'DUAL' ? 'DUAL' : 'CHECKING';
+      }
+
+      resetHeadingModeTimers();
+      return headingMode === 'COURSE' || headingMode === 'DUAL' ? headingMode : 'CHECKING';
     }
 
     function createSvgElement(tagName, attrs) {
@@ -1026,6 +1211,7 @@
       }
 
       phoneHeading = normalizeHeading(lastSmoothPhoneHeading);
+      lastPhoneHeadingUpdateAt = Date.now();
       updateHeadingSource(source);
       renderCompassHeading();
     }
@@ -1038,39 +1224,45 @@
     function renderCompassHeading() {
       const dial = document.getElementById('compassDial');
       const courseMarker = document.getElementById('courseMarker');
+      const primaryLabel = document.getElementById('primaryHeadingLabel');
+      const secondaryLabel = document.getElementById('secondaryHeadingLabel');
       const phoneValue = document.getElementById('phoneHeadingValue');
       const courseValue = document.getElementById('courseHeadingValue');
       const modeValue = document.getElementById('gpsMode');
-      const displayPhoneHeading = phoneHeading !== null ? phoneHeading : 0;
+      headingMode = resolveHeadingMode();
+      const primaryHeading = headingMode === 'COURSE' && courseHeading !== null ? courseHeading : phoneHeading;
+      const displayHeading = primaryHeading !== null ? primaryHeading : (courseHeading !== null ? courseHeading : 0);
 
       if (dial) {
         // 使用 SVG 原生 transform 属性，避开部分移动浏览器对 SVG CSS transform 刷新不稳定的问题。
-        dial.setAttribute('transform', `rotate(${-displayPhoneHeading} 160 160)`);
+        dial.setAttribute('transform', `rotate(${-displayHeading} 160 160)`);
       }
 
       if (courseMarker) {
-        if (courseHeading === null) {
+        if (courseHeading === null || headingMode === 'COURSE') {
           courseMarker.classList.add('hidden');
         } else {
-          const relativeCourse = normalizeHeading(courseHeading - displayPhoneHeading);
+          const relativeCourse = normalizeHeading(courseHeading - displayHeading);
           courseMarker.setAttribute('transform', `rotate(${relativeCourse} 160 160)`);
           courseMarker.classList.remove('hidden');
         }
       }
 
-      if (phoneValue) phoneValue.innerText = phoneHeading !== null ? formatHeadingValue(phoneHeading) : 'N/A';
-      if (courseValue) courseValue.innerText = courseHeading !== null ? formatHeadingValue(courseHeading) : 'N/A';
+      if (headingMode === 'COURSE') {
+        if (primaryLabel) primaryLabel.innerText = 'COURSE';
+        if (secondaryLabel) secondaryLabel.innerText = 'PHONE';
+        if (phoneValue) phoneValue.innerText = courseHeading !== null ? formatHeadingValue(courseHeading) : 'N/A';
+        if (courseValue) courseValue.innerText = phoneHeading !== null ? 'LINKED' : 'N/A';
+      } else {
+        if (primaryLabel) primaryLabel.innerText = 'PHONE';
+        if (secondaryLabel) secondaryLabel.innerText = 'COURSE';
+        if (phoneValue) phoneValue.innerText = phoneHeading !== null ? formatHeadingValue(phoneHeading) : 'N/A';
+        if (courseValue) courseValue.innerText = courseHeading !== null ? formatHeadingValue(courseHeading) : 'N/A';
+      }
 
       if (modeValue) {
-        if (phoneHeading !== null && courseHeading !== null) {
-          modeValue.innerText = 'DUAL';
-        } else if (phoneHeading !== null) {
-          modeValue.innerText = currentHeadingSource === 'RELATIVE' ? 'REL' : 'PHONE';
-        } else if (courseHeading !== null) {
-          modeValue.innerText = 'COURSE';
-        } else {
-          modeValue.innerText = 'WAITING';
-        }
+        modeValue.innerText = headingMode;
+        modeValue.dataset.mode = headingMode;
       }
     }
 
@@ -1275,9 +1467,56 @@
     }
 
     function attachOrientationListener(eventName, handler) {
-      if (orientationListenerAttached) return;
+      if (orientationListenersAttached.has(eventName)) return;
       window.addEventListener(eventName, handler, true);
-      orientationListenerAttached = true;
+      orientationListenersAttached.add(eventName);
+    }
+
+    function scheduleOrientationFallback() {
+      if (orientationFallbackTimer !== null) {
+        clearTimeout(orientationFallbackTimer);
+      }
+
+      orientationFallbackTimer = setTimeout(() => {
+        const hasRecentHeading = Date.now() - lastPhoneHeadingUpdateAt < orientationFallbackDelayMs;
+        if (!hasRecentHeading && !orientationListenersAttached.has('deviceorientation')) {
+          attachOrientationListener('deviceorientation', handleOrientationFallback);
+          updateHeadingSource('RELATIVE');
+        }
+      }, orientationFallbackDelayMs);
+    }
+
+    async function initOrientationSensors() {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+          // iOS 要求这个调用由用户点击直接触发；先拿方向权限，再启动定位权限，避免两个系统弹窗互相抢时机。
+          const permission = await DeviceOrientationEvent.requestPermission();
+          if (permission === 'granted') {
+            attachOrientationListener('deviceorientation', handleOrientation);
+            scheduleOrientationFallback();
+            return true;
+          }
+
+          showError('COMPASS PERMISSION DENIED. HEADING DATA WILL NOT BE AVAILABLE. PLEASE GRANT MOTION & ORIENTATION ACCESS IN YOUR BROWSER SETTINGS.');
+          resetActivationControl('Retry Compass');
+          return false;
+        } catch (err) {
+          showError('SENSOR INITIALIZATION ERROR: ' + err.message);
+          resetActivationControl('Retry Sensors');
+          return false;
+        }
+      }
+
+      if ('ondeviceorientationabsolute' in window) {
+        attachOrientationListener('deviceorientationabsolute', handleOrientationAbsolute);
+        scheduleOrientationFallback();
+      } else {
+        // 安卓降级：absolute 不可用时，使用相对方向旋转反馈，同时显示警告标签。
+        attachOrientationListener('deviceorientation', handleOrientationFallback);
+        updateHeadingSource('RELATIVE');
+      }
+
+      return true;
     }
 
     /**
@@ -1285,7 +1524,7 @@
      * 传感器权限授权与绝对磁北指南针初始化
      * ==========================================
      */
-    function startSensors() {
+    async function startSensors() {
       // [Bug7 修复] 防重入：如果已经激活过，直接返回
       if (sensorActivated) return;
       sensorActivated = true;
@@ -1301,36 +1540,7 @@
       const container = document.getElementById('activationContainer');
       if (container) container.style.display = 'none';
 
-      // 1. 同步请求指南针传感器权限 (以确保在 iOS Safari 同步上下文唤起弹窗)
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-          .then((permission) => {
-            if (permission === 'granted') {
-              attachOrientationListener('deviceorientation', handleOrientation);
-            } else {
-              // [Bug1 修复] 错误提示改为纯英文
-              showError('COMPASS PERMISSION DENIED. HEADING DATA WILL NOT BE AVAILABLE. PLEASE GRANT MOTION & ORIENTATION ACCESS IN YOUR BROWSER SETTINGS.');
-              resetActivationControl('Retry Compass');
-            }
-          })
-          .catch((err) => {
-            showError('SENSOR INITIALIZATION ERROR: ' + err.message);
-            resetActivationControl('Retry Sensors');
-          });
-      } else {
-        // 安卓或非 iOS 13+
-        if ('ondeviceorientationabsolute' in window) {
-          attachOrientationListener('deviceorientationabsolute', handleOrientationAbsolute);
-        } else {
-          // [Bug4 修复] 安卓降级：即使 absolute 不可用，也监听普通 deviceorientation
-          // 并使用 alpha 值提供相对旋转反馈，同时显示警告标签
-          attachOrientationListener('deviceorientation', handleOrientationFallback);
-          const warnLabel = document.getElementById('compassWarning');
-          if (warnLabel) warnLabel.style.display = 'block';
-        }
-      }
-
-      // 2. 异步拉起其他定位和防锁屏传感器
+      await initOrientationSensors();
       initLocationWatch();
       initWakeLock();
     }
@@ -1342,6 +1552,8 @@
       } else if (event.absolute === true && event.alpha !== null) {
         // 回退逻辑：安卓设备如果支持绝对事件
         updatePhoneHeading(360 - event.alpha, 'MAG');
+      } else if (event.alpha !== null) {
+        updatePhoneHeading(360 - event.alpha, 'RELATIVE');
       }
     }
 
@@ -1409,12 +1621,47 @@
       if (panel) panel.style.display = 'none';
     }
 
+    function setModePopoverVisible(visible) {
+      const popover = document.getElementById('modePopover');
+      const btn = document.getElementById('modeInfoBtn');
+      if (!popover || !btn) return;
+
+      popover.classList.toggle('visible', visible);
+      btn.setAttribute('aria-expanded', visible ? 'true' : 'false');
+    }
+
+    function toggleModePopover() {
+      const popover = document.getElementById('modePopover');
+      setModePopoverVisible(!(popover && popover.classList.contains('visible')));
+    }
+
     buildCompassDial();
     updateHeadingSource('WAITING');
     renderCompassHeading();
 
     // 事件绑定
     document.getElementById('activateBtn').addEventListener('click', startSensors);
+
+    document.getElementById('modeInfoBtn').addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleModePopover();
+    });
+
+    document.getElementById('modePopoverClose').addEventListener('click', () => {
+      setModePopoverVisible(false);
+    });
+
+    document.addEventListener('click', (event) => {
+      const popover = document.getElementById('modePopover');
+      const btn = document.getElementById('modeInfoBtn');
+      if (!popover || !btn || !popover.classList.contains('visible')) return;
+      if (popover.contains(event.target) || btn.contains(event.target)) return;
+      setModePopoverVisible(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setModePopoverVisible(false);
+    });
     
     document.getElementById('copyWgsBtn').addEventListener('click', () => {
       const txt = `${currentData.wgsLat.toFixed(6)}, ${currentData.wgsLng.toFixed(6)}`;

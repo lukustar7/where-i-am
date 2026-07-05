@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-07-05
+
+### Added
+
+- Added a heading mode explanation popover so PHONE, DUAL, COURSE, and CHECKING states can be inspected without leaving the dashboard.
+
+### Changed
+
+- Added time-based heading mode arbitration so high-speed COURSE takeover only happens after PHONE and COURSE stay aligned long enough to be trusted.
+- Sequenced iOS motion and location permission requests to reduce inconsistent sensor startup caused by overlapping system prompts.
+
+### Fixed
+
+- Added relative-orientation fallback handling when absolute compass data is missing, improving cases where the numeric heading updated inconsistently or the dial appeared stuck.
+- Bumped the offline cache namespace to `where-i-am-v6` so this mode and permission update is picked up after deployment.
+
 ## [0.2.0] - 2026-07-03
 
 ### Added

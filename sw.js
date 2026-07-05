@@ -6,7 +6,7 @@
  * 采用 Stale-While-Revalidate (缓存优先，后台异步刷新) 机制
  */
 
-const CACHE_NAME = 'where-i-am-v5';
+const CACHE_NAME = 'where-i-am-v6';
 const APP_SHELL = './index.html';
 const ASSETS = [
   './',
