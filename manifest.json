@@ -1,15 +1,19 @@
 {
+  "id": "./",
   "short_name": "Where I AM",
   "name": "Where I AM GPS Compass",
+  "description": "Offline-capable GPS compass with WGS-84 and GCJ-02 coordinates.",
+  "lang": "en",
   "icons": [
     {
       "src": "icon.jpg",
       "type": "image/jpeg",
       "sizes": "1024x1024",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "start_url": "./index.html",
+  "scope": "./",
   "background_color": "#050506",
   "theme_color": "#050506",
   "display": "standalone",

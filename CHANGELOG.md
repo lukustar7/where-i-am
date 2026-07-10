@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added 13 automated tests covering 5 coordinate cases and 8 heading-state cases, including invalid input, boundary points, zero-degree wraparound, speed thresholds, and timed mode transitions.
+- Added a zero-dependency build validator for 8 deployable application assets, producing a checked `dist/` package only after required references and JavaScript syntax pass.
+
+### Changed
+
+- Split the 1,751-line embedded page into a 195-line HTML entry, one stylesheet, and three responsibility-specific JavaScript modules, reducing entry-file size by 88.9%.
+- Limited high-frequency compass DOM updates to one render per animation frame, preventing redundant writes when sensor event frequency exceeds display refresh rate.
+- Added independent GPS, compass, and Wake Lock lifecycle states so one unavailable capability no longer blocks the other two.
+
+### Fixed
+
+- Cleared rejected geolocation watch identifiers before retry, ensuring each retry creates one valid replacement watch instead of returning early against a dead identifier.
+- Disabled 2 coordinate-copy actions and 4 map actions until a valid fix exists, preventing accidental use of placeholder `0,0` coordinates.
+- Included polygon edges and vertices in region checks, removing the inside/outside mismatch at configured boundary points.
+- Bound static cache refresh work to the Service Worker lifetime and isolated cache-write failures from online responses, preserving all 8 offline assets without turning storage quota errors into request failures.
+- Added stale GPS and compass handling so expired sensor values are visibly downgraded instead of remaining marked live.
+
+### Security
+
+- Added a same-origin Content Security Policy for scripts, styles, connections, manifests, and workers, and restricted cache cleanup to `where-i-am-` namespaces.
+
 ## [0.2.1] - 2026-07-05
 
 ### Added

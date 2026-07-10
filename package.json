@@ -1,0 +1,14 @@
+{
+  "name": "where-i-am",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency offline GPS compass PWA",
+  "scripts": {
+    "test": "node --test tests/geo.test.js tests/heading.test.js",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

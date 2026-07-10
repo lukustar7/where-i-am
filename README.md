@@ -1,19 +1,29 @@
 # Where I AM GPS Compass
 
-An offline-capable, single-file H5 GPS compass for mobile browsers.
-
-> **Disclaimer**: This is a Beta version and a personal testing project. All data provided is for reference only and must not be used for any production or serious/critical navigation scenarios. Please comply with all local laws and regulations. The developer disclaims all liability and responsibility for any consequences arising from the use of this application.
+An offline-capable GPS compass PWA for mobile browsers. It has no runtime dependencies and must not be used for critical navigation.
 
 ## Features
 
-- **Compass**: Displays an iOS-style circular compass with automatic PHONE, DUAL, COURSE, and CHECKING modes.
-- **GPS Metrics**: Tracks coordinates, altitude, accuracy, speed, and heading mode in one mobile viewport.
-- **Offset Coordinates**: Shows WGS-84 and GCJ-02 with four map links when the configured boundary rule applies.
-- **Zero Dependencies**: Pure HTML, inline CSS, and SVG assets for offline reliability.
-- **Wake Lock**: Keeps the screen active during navigation.
+- Displays PHONE, DUAL, COURSE, and CHECKING heading modes.
+- Reports WGS-84 coordinates, optional GCJ-02 coordinates, altitude, accuracy, and speed.
+- Provides Apple Maps and Google Maps links only after a valid GPS fix.
+- Supports offline startup and Screen Wake Lock where the browser permits them.
 
-## Usage
+## Structure
 
-Serve via HTTPS. Open in browser and tap "Start Sensors".
+- `index.html` and `styles.css`: interface markup and responsive presentation.
+- `js/app.js`: browser permissions, sensor lifecycle, rendering, and user actions.
+- `js/geo.js`: region detection and WGS-84 to GCJ-02 conversion.
+- `js/heading.js`: heading normalization, smoothing, and mode arbitration.
+- `sw.js`: application-shell caching and offline request handling.
 
-<!-- Trigger build: 2026-07-03 -->
+## Development
+
+Requires Node.js 20 or later.
+
+```bash
+npm test
+npm run build
+```
+
+The build writes a validated static package to `dist/`. Serve that directory through HTTPS for mobile sensor access; `localhost` may be used for local interface testing.
