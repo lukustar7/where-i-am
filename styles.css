@@ -127,10 +127,7 @@ body {
   width: 100%;
   background-color: var(--md-sys-color-surface-container-lowest);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+  padding: max(16px, calc(env(safe-area-inset-top, 0px) + 8px)) 16px 10px;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -142,54 +139,52 @@ body {
   max-width: 672px;
   margin: 0 auto;
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-bar-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
-.title-area {
+.app-bar-meta-row {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
   line-height: 1.2;
-}
-
-.header-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant);
   line-height: 1.2;
-}
-
-.header-divider {
-  color: var(--md-sys-color-outline-variant);
-  font-size: 11px;
+  white-space: nowrap;
 }
 
 .update-time-header {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--md-sys-color-primary);
   letter-spacing: 0.2px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .status-stack {
   display: flex;
   gap: 6px;
   align-items: center;
-  flex-wrap: wrap;
   justify-content: flex-end;
 }
 

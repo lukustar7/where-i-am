@@ -18,10 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Streamlined telemetry metrics grid to 3 core physical measurements: Accuracy, Altitude, and Speed.
 - Replaced dark sci-fi styling with clean Google M3 light palette (#F6FAFF background, #F0F4F9 tonal containers, #005BBF primary accent).
 - Updated manifest.json theme and background color tokens to match light mode.
-- Bumped offline Service Worker cache namespace to `where-i-am-v11`.
+- Bumped offline Service Worker cache namespace to `where-i-am-v12`.
 
 ### Fixed
 
+- Fixed iOS status bar and notch clipping by adding `viewport-fit=cover` and dynamic `env(safe-area-inset-top)` header padding.
+- Refactored Top App Bar into fixed 2-row layout, completely eliminating layout shifting when timestamp text length changes.
 - Eliminated dial locking when moving: the compass dial strictly and continuously tracks physical phone orientation without being hijacked by vehicle course.
 - Implemented true simultaneous dual-pointer rendering with relative course angle computation and dedicated two-row indicator legends (Phone Heading vs GPS Course).
 - Preserved the Start Sensors play icon by refreshing the button label independently from the icon markup.

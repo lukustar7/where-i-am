@@ -22,17 +22,16 @@
   <!-- Top App Bar with integrated timestamp -->
   <header class="app-bar">
     <div class="app-bar-inner">
-      <div class="title-area">
+      <div class="app-bar-row">
         <h1 class="title">Where I AM</h1>
-        <div class="header-meta-row">
-          <span class="subtitle">Offline GPS compass</span>
-          <span class="header-divider">•</span>
-          <div id="updateTime" class="update-time-header" aria-live="polite">LAST FIX: NEVER</div>
+        <div class="status-stack" aria-label="Sensor status">
+          <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
+          <div id="lockStatus" class="status-badge">WAKE OFF</div>
         </div>
       </div>
-      <div class="status-stack" aria-label="Sensor status">
-        <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
-        <div id="lockStatus" class="status-badge">WAKE OFF</div>
+      <div class="app-bar-meta-row">
+        <span class="subtitle">Offline GPS compass</span>
+        <div id="updateTime" class="update-time-header" aria-live="polite">LAST FIX: NEVER</div>
       </div>
     </div>
   </header>

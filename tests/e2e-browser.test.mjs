@@ -176,6 +176,16 @@ if (!activationCheck.hasIcon || activationCheck.labelText !== 'Start Sensors') {
 }
 console.log(`   -> 启动按钮图标保留: ${activationCheck.hasIcon ? '是' : '否'} | 初始文案: ${activationCheck.labelText}`);
 
+const appbarLayout = await evaluate(`
+  (() => {
+    const row1 = document.querySelector('.app-bar-row');
+    const row2 = document.querySelector('.app-bar-meta-row');
+    return Boolean(row1 && row2);
+  })()
+`);
+if (!appbarLayout) throw new Error('App bar 2-row layout structure missing');
+console.log('   -> 顶栏两行流式布局 (.app-bar-row + .app-bar-meta-row): 正常');
+
 // 测试 2: 模拟传感器启动与 iOS / Android 陀螺仪输入 (手持朝向 120° SE)
 console.log('\n✔ [2/6] 模拟手机旋转至 120° SE (静止状态)...');
 const compassTest1 = await evaluate(`
