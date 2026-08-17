@@ -4,7 +4,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 
 ## Features
 
-- Displays PHONE, DUAL, COURSE, and CHECKING heading modes.
+- Displays PHONE, DUAL, COURSE, and WAITING heading modes.
 - Reports WGS-84 coordinates, optional GCJ-02 coordinates, altitude, accuracy, and speed.
 - Provides Apple Maps and Google Maps links only after a valid GPS fix.
 - Supports offline startup and Screen Wake Lock where the browser permits them.

@@ -46,6 +46,7 @@ function requireElement(id) {
 
 const elements = Object.freeze({
   activateBtn: requireElement('activateBtn'),
+  activateBtnLabel: requireElement('activateBtnLabel'),
   activationContainer: requireElement('activationContainer'),
   alertPanel: requireElement('alertPanel'),
   gpsStatus: requireElement('gpsStatus'),
@@ -445,6 +446,8 @@ function handleLocationError(error) {
       setWarning('location', 'LOCATION TIMEOUT: STILL SEARCHING FOR A GPS FIX.');
       break;
     default:
+      // 未知错误通常意味着旧监听已经失效；先清空 ID，重试按钮才能创建新监听。
+      clearLocationWatch();
       state.locationStatus = 'error';
       setStatusBadge(elements.gpsStatus, 'GPS ERROR', 'error');
       setWarning('location', 'LOCATION ERROR: AN UNKNOWN DEVICE ERROR OCCURRED.');
@@ -621,7 +624,7 @@ function refreshActivationControl() {
 
   if (state.startInProgress) {
     elements.activateBtn.disabled = true;
-    elements.activateBtn.textContent = 'Starting...';
+    elements.activateBtnLabel.textContent = 'Starting...';
     return;
   }
 
@@ -635,12 +638,12 @@ function refreshActivationControl() {
 
   elements.activateBtn.disabled = false;
   if (needsLocation && !needsCompass) {
-    elements.activateBtn.textContent = state.locationStatus === 'idle' ? 'Start GPS' : 'Retry GPS';
+    elements.activateBtnLabel.textContent = state.locationStatus === 'idle' ? 'Start GPS' : 'Retry GPS';
   } else if (!needsLocation && needsCompass) {
-    elements.activateBtn.textContent = state.orientationStatus === 'idle' ? 'Start Compass' : 'Retry Compass';
+    elements.activateBtnLabel.textContent = state.orientationStatus === 'idle' ? 'Start Compass' : 'Retry Compass';
   } else {
     const hasFailure = state.locationStatus !== 'idle' || state.orientationStatus !== 'idle';
-    elements.activateBtn.textContent = hasFailure ? 'Retry Sensors' : 'Start Sensors';
+    elements.activateBtnLabel.textContent = hasFailure ? 'Retry Sensors' : 'Start Sensors';
   }
 }
 

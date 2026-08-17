@@ -47,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Included polygon edges and vertices in region checks, removing the inside/outside mismatch at configured boundary points.
 - Bound static cache refresh work to the Service Worker lifetime and isolated cache-write failures from online responses, preserving all 8 offline assets without turning storage quota errors into request failures.
 - Added stale GPS and compass handling so expired sensor values are visibly downgraded instead of remaining marked live.
+- Preserved the Start Sensors play icon by refreshing the button label independently from the icon markup.
+- Cleared a dead geolocation watch identifier on unknown device errors so the Retry GPS action can always create a fresh watch.
+- Corrected the README heading-mode list from CHECKING to WAITING to match the current resolver states.
+- Bumped the offline cache namespace to `where-i-am-v10` so the icon and retry fixes are picked up after deployment.
 
 ### Security
 

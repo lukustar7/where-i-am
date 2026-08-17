@@ -12,15 +12,17 @@
  */
 
 import http from 'node:http';
-import fs from 'node:fs';
+import fs, { mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PORT = 8899;
-const DEBUG_PORT = 9222;
+const PORT = 9000 + Math.floor(Math.random() * 1000);
+const DEBUG_PORT = 11000 + Math.floor(Math.random() * 1000);
+const USER_DATA_DIR = mkdtempSync(path.join(os.tmpdir(), 'where-i-am-e2e-'));
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -39,7 +41,8 @@ const server = http.createServer((req, res) => {
     const ext = path.extname(filePath);
     res.writeHead(200, {
       'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store'
     });
     fs.createReadStream(filePath).pipe(res);
   } else {
@@ -57,9 +60,23 @@ const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chro
   '--no-default-browser-check',
   '--disable-gpu',
   '--disable-extensions',
+  `--user-data-dir=${USER_DATA_DIR}`,
   '--window-size=390,844',
-  `http://localhost:${PORT}/index.html`
-]);
+  `http://localhost:${PORT}/index.html?e2e=${Date.now()}`
+], { stdio: ['ignore', 'ignore', 'inherit'] });
+
+process.on('exit', () => {
+  if (chrome.exitCode === null) {
+    chrome.kill();
+  }
+  server.close();
+  rmSync(USER_DATA_DIR, {
+    recursive: true,
+    force: true,
+    maxRetries: 5,
+    retryDelay: 100
+  });
+});
 
 async function fetchDebuggerUrl() {
   for (let i = 0; i < 30; i++) {
@@ -143,6 +160,21 @@ const missing = await evaluate(`
 `);
 if (missing.length > 0) throw new Error(`Missing elements: ${missing.join(', ')}`);
 console.log('   -> 25 个业务 ID 100% 完整挂载！');
+
+const activationCheck = await evaluate(`
+  (() => {
+    const button = document.getElementById('activateBtn');
+    const label = document.getElementById('activateBtnLabel');
+    return {
+      hasIcon: Boolean(button.querySelector('.material-symbols-outlined')),
+      labelText: label ? label.textContent : null
+    };
+  })()
+`);
+if (!activationCheck.hasIcon || activationCheck.labelText !== 'Start Sensors') {
+  throw new Error(`Activate button state invalid: ${JSON.stringify(activationCheck)}`);
+}
+console.log(`   -> 启动按钮图标保留: ${activationCheck.hasIcon ? '是' : '否'} | 初始文案: ${activationCheck.labelText}`);
 
 // 测试 2: 模拟传感器启动与 iOS / Android 陀螺仪输入 (手持朝向 120° SE)
 console.log('\n✔ [2/6] 模拟手机旋转至 120° SE (静止状态)...');
