@@ -4,7 +4,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 
 ## Features
 
-- Displays PHONE, DUAL, COURSE, and WAITING heading modes.
+- Real-time dual compass displaying simultaneous handheld phone heading and moving GPS trajectory course.
 - Reports WGS-84 coordinates, optional GCJ-02 coordinates, altitude, accuracy, and speed.
 - Provides Apple Maps and Google Maps links only after a valid GPS fix.
 - Supports offline startup and Screen Wake Lock where the browser permits them.
@@ -14,7 +14,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 - `index.html` and `styles.css`: interface markup and responsive presentation.
 - `js/app.js`: browser permissions, sensor lifecycle, rendering, and user actions.
 - `js/geo.js`: region detection and WGS-84 to GCJ-02 conversion.
-- `js/heading.js`: heading normalization, smoothing, and mode arbitration.
+- `js/heading.js`: heading normalization, relative angle resolution, and low-pass smoothing.
 - `sw.js`: application-shell caching and offline request handling.
 
 ## Development

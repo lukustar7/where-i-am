@@ -1,16 +1,9 @@
 import {
-  REGION_OFFSET_BOUNDARY,
-  REGION_OFFSET_ZONE_A,
-  REGION_OFFSET_ZONE_B,
-  REGION_OFFSET_ZONE_C,
   getOffsetRegionState,
-  isPointInPolygon,
   isValidCoordinate,
   wgs84ToGcj02
 } from './geo.js';
 import {
-  HEADING_MODES,
-  HeadingModeResolver,
   getRelativeCourseAngle,
   isReliableCourseHeading,
   normalizeHeading,
@@ -63,10 +56,6 @@ const elements = Object.freeze({
   gpsAcc: requireElement('gpsAcc'),
   gpsAlt: requireElement('gpsAlt'),
   gpsSpd: requireElement('gpsSpd'),
-  gpsMode: requireElement('gpsMode'),
-  modeInfoBtn: requireElement('modeInfoBtn'),
-  modePopover: requireElement('modePopover'),
-  modePopoverClose: requireElement('modePopoverClose'),
   wgsLat: requireElement('wgsLat'),
   wgsLng: requireElement('wgsLng'),
   gcjCard: requireElement('gcjCard'),
@@ -81,7 +70,6 @@ const elements = Object.freeze({
   updateTime: requireElement('updateTime')
 });
 
-const headingModeResolver = new HeadingModeResolver();
 const warningMessages = new Map();
 const orientationListeners = new Map();
 const copyFeedbackTimers = new Map();
@@ -248,12 +236,6 @@ function updateHeadingSource(source) {
 }
 
 function renderCompassHeading() {
-  const mode = headingModeResolver.resolve({
-    phoneHeading: state.phoneHeading,
-    courseHeading: state.courseHeading,
-    speed: state.currentData.speed
-  });
-
   // 主表盘永远只跟随手机物理手持方向旋转（无数据时默认保持 0 度）
   const displayPhoneHeading = normalizeHeading(state.phoneHeading) ?? 0;
   elements.compassDial.setAttribute('transform', `rotate(${-displayPhoneHeading} 160 160)`);
@@ -276,9 +258,6 @@ function renderCompassHeading() {
   } else {
     elements.courseHeadingValue.textContent = 'N/A';
   }
-
-  elements.gpsMode.textContent = mode;
-  elements.gpsMode.classList.toggle('active-green', mode === HEADING_MODES.DUAL_ACTIVE);
 }
 
 /**
@@ -764,88 +743,10 @@ async function copyCoordinates(kind) {
   }
 }
 
-function setModePopoverVisible(visible, restoreFocus = false) {
-  elements.modePopover.hidden = !visible;
-  elements.modeInfoBtn.setAttribute('aria-expanded', visible ? 'true' : 'false');
-
-  if (visible) {
-    elements.modePopoverClose.focus({ preventScroll: true });
-  } else if (restoreFocus) {
-    elements.modeInfoBtn.focus({ preventScroll: true });
-  }
-}
-
-/**
- * 保留原项目的控制台自测入口，便于无测试工具的手机浏览器现场核对区域配置。
- * 自动测试使用同一批核心函数，但不会弹窗。
- */
-function runSystemSelfTest() {
-  const testCases = [
-    { name: 'Reference point A', lng: 116.397428, lat: 39.90923, expectRegion: true, zone: null },
-    { name: 'Reference point B', lng: 121.564558, lat: 25.033964, expectRegion: true, zone: 'C' },
-    { name: 'Reference point C', lng: 114.173355, lat: 22.292104, expectRegion: true, zone: 'A' },
-    { name: 'Reference point D', lng: 113.54089, lat: 22.19762, expectRegion: true, zone: 'B' },
-    { name: 'Reference point E', lng: -0.1246, lat: 51.5007, expectRegion: false, zone: null },
-    { name: 'Reference point F', lng: -74.0445, lat: 40.6892, expectRegion: false, zone: null }
-  ];
-
-  const zonePolygons = {
-    A: REGION_OFFSET_ZONE_A,
-    B: REGION_OFFSET_ZONE_B,
-    C: REGION_OFFSET_ZONE_C
-  };
-  const lines = ['SYSTEM TEST RESULTS:'];
-  let allPassed = true;
-
-  for (const testCase of testCases) {
-    const region = getOffsetRegionState(testCase.lng, testCase.lat);
-    const expectedZoneMatched = testCase.zone === null
-      || isPointInPolygon(testCase.lng, testCase.lat, zonePolygons[testCase.zone]);
-    const [convertedLng, convertedLat] = wgs84ToGcj02(testCase.lng, testCase.lat);
-    const changed = convertedLng !== testCase.lng || convertedLat !== testCase.lat;
-    const passed = region.hasOffsetRegion === testCase.expectRegion
-      && expectedZoneMatched
-      && changed === testCase.expectRegion;
-
-    allPassed = allPassed && passed;
-    lines.push(`${passed ? 'PASS' : 'FAIL'}: ${testCase.name}`);
-  }
-
-  // 同时确认主范围常量仍可被模块正常读取，防止构建时意外裁掉配置。
-  lines.push(`BOUNDARY POINTS: ${REGION_OFFSET_BOUNDARY.length}`);
-  lines.push(allPassed ? 'STATUS: ALL TESTS PASSED.' : 'STATUS: TEST FAILURE.');
-  const message = lines.join('\n');
-  console.log(message);
-  window.alert(message);
-  return allPassed;
-}
-
 function bindEvents() {
   elements.activateBtn.addEventListener('click', startSensors);
   elements.copyWgsBtn.addEventListener('click', () => copyCoordinates('wgs'));
   elements.copyGcjBtn.addEventListener('click', () => copyCoordinates('gcj'));
-
-  elements.modeInfoBtn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    setModePopoverVisible(elements.modePopover.hidden);
-  });
-  elements.modePopoverClose.addEventListener('click', () => setModePopoverVisible(false, true));
-
-  document.addEventListener('click', (event) => {
-    if (elements.modePopover.hidden) {
-      return;
-    }
-    if (elements.modePopover.contains(event.target) || elements.modeInfoBtn.contains(event.target)) {
-      return;
-    }
-    setModePopoverVisible(false);
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !elements.modePopover.hidden) {
-      setModePopoverVisible(false, true);
-    }
-  });
 
   for (const link of [elements.amapWgs, elements.gmapWgs, elements.amapGcj, elements.gmapGcj]) {
     link.addEventListener('click', (event) => {
@@ -884,9 +785,6 @@ function initialize() {
   bindEvents();
   registerServiceWorker();
   window.setInterval(updateFreshnessIndicators, 1000);
-
-  // 显式挂到 window，保持历史版本承诺的手机控制台手工自测方式。
-  window.runSystemSelfTest = runSystemSelfTest;
 }
 
 initialize();

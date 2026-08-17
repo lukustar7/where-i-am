@@ -467,18 +467,12 @@ body {
   margin-top: 2px;
 }
 
-/* Telemetry Metrics Matrix */
+/* Telemetry Metrics Matrix (3 Core Physical Metrics) */
 .metrics-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-}
-
-@media (min-width: 600px) {
-  .metrics-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 .metric-card {
@@ -515,37 +509,6 @@ body {
 
 .data-value.active-green {
   color: var(--color-success);
-}
-
-.metric-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  color: var(--md-sys-color-primary);
-  cursor: pointer;
-  padding: 3px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.16s ease;
-}
-
-.icon-btn:hover {
-  background-color: var(--md-sys-color-surface-container);
-}
-
-.info-btn {
-  font-size: 12px;
-  width: 16px;
-  height: 16px;
-  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* Coordinates Deck */
@@ -712,81 +675,6 @@ body {
 .map-icon {
   font-size: 14px;
   font-weight: 700;
-}
-
-/* Heading Modes Popover Dialog */
-.mode-popover {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100% - 32px);
-  max-width: 380px;
-  background: var(--md-sys-color-surface-container-lowest);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 20px;
-  padding: 20px;
-  z-index: 100;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.popover-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.popover-title {
-  font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface);
-}
-
-.popover-close-btn {
-  font-size: 20px;
-  line-height: 1;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--md-sys-color-surface-container-low);
-  border: none;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-}
-
-.mode-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mode-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--md-sys-color-surface-container);
-}
-
-.mode-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.mode-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--md-sys-color-primary);
-}
-
-.mode-desc {
-  font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
-  line-height: 1.4;
 }
 
 /* Fallback & Helper Classes */

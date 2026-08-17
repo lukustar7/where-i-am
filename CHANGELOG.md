@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-08-17
+
+### Removed
+
+- Removed obsolete heading mode metric and mode popover dialog to eliminate conflicting and redundant state displays.
+- Removed unused HeadingModeResolver class and pruned heading.js down to essential mathematical utilities.
+- Streamlined telemetry metrics grid to 3 core physical measurements: Accuracy, Altitude, and Speed.
+
+### Changed
+
+- Bumped offline Service Worker cache namespace to `where-i-am-v11`.
+
 ## [0.3.1] - 2026-08-17
 
 ### Fixed

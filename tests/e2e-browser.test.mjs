@@ -2,13 +2,12 @@
  * 真实的 Headless Chrome 浏览器端到端深度模拟测试套件
  *
  * 覆盖：
- * 1. 真实 DOM 完整性与 CSP 安全检查
+ * 1. 真实 DOM 完整性与 CSP 安全检查（22 个核心业务节点）
  * 2. 模拟 iOS/安卓传感器事件与主盘旋转
- * 3. 模拟中国境内 GPS 信号（校验 GCJ-02 显隐与苹果/谷歌高德纠偏跳转）
- * 4. 模拟海外 GPS 信号（校验 GCJ-02 动态隐藏）
+ * 3. 模拟中国境内 GPS 信号（校验 GCJ-02 显隐与 4 个地图跳转按钮）
+ * 4. 模拟海外 GPS 信号（校验 GCJ-02 动态隐藏，严格只展示 2 个 WGS 按钮）
  * 5. 模拟汽车 80km/h 移动时“主盘跟手转 + 蓝色航向针指车头”的相对角度数学解算
- * 6. 复制按钮动画与 ✔ 图标状态
- * 7. Popover 弹窗交互与全量控制台错误捕捉
+ * 6. 3 格核心物理量（Accuracy / Altitude / Speed）与坐标复制动画
  */
 
 import http from 'node:http';
@@ -105,7 +104,8 @@ ws.onmessage = (event) => {
     const text = msg.params.args.map((a) => a.value || a.description || '').join(' ');
     consoleErrors.push(text);
   } else if (msg.method === 'Runtime.exceptionThrown') {
-    consoleErrors.push(msg.params.exceptionDetails.text);
+    const desc = msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text;
+    consoleErrors.push(desc);
   }
 
   if (msg.id && callbacks.has(msg.id)) {
@@ -145,13 +145,13 @@ await new Promise((r) => setTimeout(r, 800));
 console.log('\n================== 开始全面真实浏览器测试 ==================\n');
 
 // 测试 1: 基础 DOM 树与 ID 挂载
-console.log('✔ [1/6] 检查 DOM 挂载点完整度...');
+console.log('✔ [1/6] 检查 DOM 挂载点完整度与启动按钮图标...');
 const missing = await evaluate(`
   (() => {
     const required = [
-      'gpsStatus', 'lockStatus', 'updateTime', 'activateBtn',
+      'gpsStatus', 'lockStatus', 'updateTime', 'activateBtn', 'activateBtnLabel',
       'compassDial', 'courseMarker', 'phoneHeadingValue', 'courseHeadingValue',
-      'gpsAcc', 'gpsAlt', 'gpsSpd', 'gpsMode', 'modeInfoBtn', 'modePopover',
+      'gpsAcc', 'gpsAlt', 'gpsSpd',
       'wgsLat', 'wgsLng', 'gcjCard', 'gcjLat', 'gcjLng', 'copyWgsBtn', 'copyGcjBtn',
       'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj'
     ];
@@ -159,7 +159,7 @@ const missing = await evaluate(`
   })()
 `);
 if (missing.length > 0) throw new Error(`Missing elements: ${missing.join(', ')}`);
-console.log('   -> 25 个业务 ID 100% 完整挂载！');
+console.log('   -> 23 个核心业务 ID 100% 完整挂载！');
 
 const activationCheck = await evaluate(`
   (() => {
@@ -209,7 +209,7 @@ const dualTest = await evaluate(`
 
     // 2. 模拟 GPS 卫星数据 (速度 80 km/h = 22.22 m/s, 航向 0°)
     const { wgs84ToGcj02, getOffsetRegionState } = await import('./js/geo.js');
-    const { normalizeHeading, getRelativeCourseAngle } = await import('./js/heading.js');
+    const { getRelativeCourseAngle } = await import('./js/heading.js');
 
     // 触发系统内位置更新
     const lat = 39.909230;
@@ -243,7 +243,6 @@ const dualTest = await evaluate(`
     document.getElementById('courseMarker').classList.remove('hidden');
     document.getElementById('phoneHeadingValue').innerText = '090° E';
     document.getElementById('courseHeadingValue').innerText = '000° N';
-    document.getElementById('gpsMode').innerText = 'DUAL';
 
     return {
       dialTransform: document.getElementById('compassDial').getAttribute('transform'),
@@ -284,30 +283,17 @@ console.log(`   -> 境外地理围栏识别: ${overseasTest.hasOffsetRegion ? '�
 console.log(`   -> GCJ-02 坐标卡片自动隐藏: ${overseasTest.gcjCardHidden ? '是 (正确隐藏)' : '否'}`);
 console.log(`   -> GCJ 高德/谷歌地图跳转按钮自动隐藏: ${overseasTest.amapGcjHidden ? '是 (正确隐藏)' : '否'}`);
 
-// 测试 5: 弹窗与无障碍按键交互
-console.log('\n✔ [5/6] 模拟模式弹窗打开与关闭交互...');
-const popoverCheck = await evaluate(`
+// 测试 5: 检查 3 格物理指标栅格排版
+console.log('\n✔ [5/6] 检查遥测指标栅格（纯净 3 格：Accuracy / Altitude / Speed）...');
+const metricsCount = await evaluate(`
   (() => {
-    const infoBtn = document.getElementById('modeInfoBtn');
-    const popover = document.getElementById('modePopover');
-    const closeBtn = document.getElementById('modePopoverClose');
-
-    infoBtn.click();
-    const open1 = !popover.hidden;
-
-    closeBtn.click();
-    const closed1 = popover.hidden;
-
-    infoBtn.click();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    const closed2 = popover.hidden;
-
-    return { open1, closed1, closed2 };
+    const grid = document.querySelector('.metrics-grid');
+    const cards = grid ? grid.querySelectorAll('.metric-card') : [];
+    return cards.length;
   })()
 `);
-console.log(`   -> 点击信息按钮打开弹窗: ${popoverCheck.open1}`);
-console.log(`   -> 点击叉号按钮关闭弹窗: ${popoverCheck.closed1}`);
-console.log(`   -> 按键盘 ESC 键关闭弹窗: ${popoverCheck.closed2}`);
+console.log(`   -> 指标格数量: ${metricsCount} 格 (黄金 3 物理指标)`);
+if (metricsCount !== 3) throw new Error(`Expected 3 metric cards, found ${metricsCount}`);
 
 // 测试 6: 复制按钮反馈
 console.log('\n✔ [6/6] 模拟坐标复制微交互...');
@@ -337,7 +323,7 @@ if (consoleErrors.length > 0) {
   console.log('❌ 存在控制台报错:');
   consoleErrors.forEach((err) => console.log('  -', err));
 } else {
-  console.log('🎉 零错误！零警告！所有端到端用例 100% 完美通过！');
+  console.log('🎉 零错误！零警告！全盘精简与优化后所有端到端用例 100% 完美通过！');
 }
 
 ws.close();

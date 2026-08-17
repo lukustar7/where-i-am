@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  HEADING_MODES,
-  HeadingModeResolver,
   getHeadingDelta,
   getRelativeCourseAngle,
   isReliableCourseHeading,
@@ -47,17 +45,4 @@ test('GPS 运动方向必须同时满足方向和速度条件', () => {
   assert.equal(isReliableCourseHeading(90, 7.99), false);
   assert.equal(isReliableCourseHeading(null, 20), false);
   assert.equal(isReliableCourseHeading(90, null), false);
-});
-
-test('双向模式解析：移动且双传感器正常为 DUAL，低速回到 PHONE', () => {
-  const resolver = new HeadingModeResolver();
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 30 }), HEADING_MODES.DUAL_ACTIVE);
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 5 }), HEADING_MODES.PHONE_ONLY);
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: null, speed: 0 }), HEADING_MODES.PHONE_ONLY);
-});
-
-test('缺少手机方向时为 COURSE，全部缺失时为 WAITING', () => {
-  const resolver = new HeadingModeResolver();
-  assert.equal(resolver.resolve({ phoneHeading: null, courseHeading: 180, speed: 30 }), HEADING_MODES.COURSE_ONLY);
-  assert.equal(resolver.resolve({ phoneHeading: null, courseHeading: null, speed: null }), HEADING_MODES.WAITING);
 });

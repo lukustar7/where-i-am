@@ -92,60 +92,24 @@
       </div>
     </section>
 
-    <!-- Telemetry Metrics Matrix -->
+    <!-- Telemetry Metrics Matrix (3 Core Physical Metrics) -->
     <section class="metrics-grid" aria-label="GPS metrics">
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">my_location</span>
+        <span class="material-symbols-outlined metric-icon" aria-hidden="true">my_location</span>
         <span class="data-label">Accuracy</span>
         <span id="gpsAcc" class="data-value">N/A</span>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">height</span>
+        <span class="material-symbols-outlined metric-icon" aria-hidden="true">height</span>
         <span class="data-label">Altitude</span>
         <span id="gpsAlt" class="data-value">N/A</span>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">speed</span>
+        <span class="material-symbols-outlined metric-icon" aria-hidden="true">speed</span>
         <span class="data-label">Speed</span>
         <span id="gpsSpd" class="data-value">N/A</span>
       </div>
-      <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon">settings_input_antenna</span>
-        <div class="metric-title-row">
-          <span class="data-label">Mode</span>
-          <button id="modeInfoBtn" class="icon-btn info-btn" type="button" title="Heading modes" aria-label="Explain heading modes" aria-expanded="false" aria-controls="modePopover">
-            <span class="material-symbols-outlined" style="font-size: 16px;">info</span>
-          </button>
-        </div>
-        <span id="gpsMode" class="data-value">WAITING</span>
-      </div>
     </section>
-
-    <!-- Heading Modes Popover Modal -->
-    <div id="modePopover" class="mode-popover" role="dialog" aria-labelledby="modePopoverTitle" hidden>
-      <div class="popover-title-row">
-        <div id="modePopoverTitle" class="popover-title">Heading Modes</div>
-        <button id="modePopoverClose" class="popover-close-btn" type="button" aria-label="Close heading mode explanation">&times;</button>
-      </div>
-      <div class="mode-list">
-        <div class="mode-row">
-          <div class="mode-name">DUAL</div>
-          <div class="mode-desc">Moving (speed &ge; 8 km/h). Device compass (Red pointer) and GPS motion trajectory (Blue arrow) are shown simultaneously.</div>
-        </div>
-        <div class="mode-row">
-          <div class="mode-name">PHONE</div>
-          <div class="mode-desc">Stationary or walking (&lt; 8 km/h). Main dial smoothly tracks your handheld phone orientation.</div>
-        </div>
-        <div class="mode-row">
-          <div class="mode-name">COURSE</div>
-          <div class="mode-desc">GPS motion course active while device compass is calibrating or unavailable.</div>
-        </div>
-        <div class="mode-row">
-          <div class="mode-name">WAITING</div>
-          <div class="mode-desc">Waiting for orientation sensor or GPS satellite fix.</div>
-        </div>
-      </div>
-    </div>
 
     <!-- Coordinates Deck -->
     <section class="coordinates-panel" aria-label="Coordinates">

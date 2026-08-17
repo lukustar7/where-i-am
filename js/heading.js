@@ -1,18 +1,11 @@
 /**
- * 指南针方向计算与双向指示解算模块。
+ * 指南针方向数学计算与双向指示解算模块。
  *
- * 所有函数都不依赖 DOM 或浏览器传感器，保证方向平滑、相对角解算和状态判定的纯粹性。
+ * 纯数学函数库，零 DOM 依赖，提供角度标准化、最短角计算、相对角解算和低通滤波。
  */
 
-export const HEADING_MODES = Object.freeze({
-  WAITING: 'WAITING',
-  PHONE_ONLY: 'PHONE',
-  DUAL_ACTIVE: 'DUAL',
-  COURSE_ONLY: 'COURSE'
-});
-
 export const DEFAULT_HEADING_CONFIG = Object.freeze({
-  courseSpeedThreshold: 8 // km/h
+  courseSpeedThreshold: 8 // 8 km/h 速度阈值
 });
 
 /**
@@ -93,43 +86,4 @@ export function isReliableCourseHeading(heading, speed, threshold = DEFAULT_HEAD
   return Number.isFinite(heading)
     && Number.isFinite(speed)
     && speed >= threshold;
-}
-
-/**
- * 解析当前指南针运行模式：
- * - DUAL: 手机手持方向与运动航向均有效（车辆行驶中）
- * - PHONE: 仅手机手持方向有效（静止或步行）
- * - COURSE: 手机手持方向缺失但有运动航向
- * - WAITING: 等待传感器初始化
- */
-export class HeadingModeResolver {
-  constructor(config = {}) {
-    this.config = {
-      ...DEFAULT_HEADING_CONFIG,
-      ...config
-    };
-  }
-
-  resolve({ phoneHeading = null, courseHeading = null, speed = null } = {}) {
-    const hasPhoneHeading = normalizeHeading(phoneHeading) !== null;
-    const hasReliableCourse = isReliableCourseHeading(
-      courseHeading,
-      speed,
-      this.config.courseSpeedThreshold
-    );
-
-    if (hasPhoneHeading && hasReliableCourse) {
-      return HEADING_MODES.DUAL_ACTIVE;
-    }
-
-    if (hasPhoneHeading) {
-      return HEADING_MODES.PHONE_ONLY;
-    }
-
-    if (hasReliableCourse) {
-      return HEADING_MODES.COURSE_ONLY;
-    }
-
-    return HEADING_MODES.WAITING;
-  }
 }
