@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-17
+
+### Added
+
+- Overhauled UI design language to Google Material Design 3 (M3 Light Theme) featuring Google Sans typography, soft tonal surface containers, and Material Symbols iconography.
+- Integrated the timestamp readout directly into the Top App Bar header area alongside the title and subtitle for improved screen space utilization.
+- Bumped offline Service Worker cache namespace to `where-i-am-v8`.
+
+### Changed
+
+- Replaced dark sci-fi styling with clean Google M3 light palette (#F6FAFF background, #F0F4F9 tonal containers, #005BBF primary accent).
+- Updated manifest.json theme and background color tokens to match light mode.
+
 ## [Unreleased]
 
 ### Added

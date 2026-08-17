@@ -3,42 +3,59 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Offline-capable GPS compass with WGS-84 and GCJ-02 coordinates.">
-  <meta name="theme-color" content="#050506">
-  <meta name="color-scheme" content="dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
-  <title>Where I AM</title>
+  <meta name="description" content="Offline-capable GPS compass with WGS-84 and GCJ-02 coordinates in Material Design 3.">
+  <meta name="theme-color" content="#f6faff">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
+  <title>Where I AM - GPS Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
   <link rel="apple-touch-icon" href="icon.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Where I AM">
 </head>
 <body>
-  <header>
-    <div>
-      <div class="title">Where I AM</div>
-      <div class="subtitle">Offline GPS compass</div>
-    </div>
-    <div class="status-stack" aria-label="Sensor status">
-      <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
-      <div id="compassSource" class="status-badge neutral" aria-live="polite">COMPASS WAIT</div>
-      <div id="lockStatus" class="status-badge">WAKE OFF</div>
+  <!-- Top App Bar with integrated timestamp -->
+  <header class="app-bar">
+    <div class="app-bar-inner">
+      <div class="title-area">
+        <h1 class="title">Where I AM</h1>
+        <div class="header-meta-row">
+          <span class="subtitle">Offline GPS compass</span>
+          <span class="header-divider">•</span>
+          <div id="updateTime" class="update-time-header" aria-live="polite">LAST FIX: NEVER</div>
+        </div>
+      </div>
+      <div class="status-stack" aria-label="Sensor status">
+        <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
+        <div id="compassSource" class="status-badge neutral" aria-live="polite">COMPASS WAIT</div>
+        <div id="lockStatus" class="status-badge">WAKE OFF</div>
+      </div>
     </div>
   </header>
 
-  <main>
+  <!-- Main Canvas Workspace -->
+  <main class="main-content">
+    <!-- Main Activation Trigger -->
     <div id="activationContainer" class="activation-row">
-      <button id="activateBtn" class="btn-activate" type="button">Start Sensors</button>
+      <button id="activateBtn" class="btn-primary" type="button">
+        <span class="material-symbols-outlined icon-fill">play_arrow</span>
+        <span>Start Sensors</span>
+      </button>
     </div>
 
+    <!-- Error/Notice Alert Panel -->
     <noscript>
       <div class="alert-panel">JAVASCRIPT IS REQUIRED TO READ LOCATION AND COMPASS DATA.</div>
     </noscript>
     <div id="alertPanel" class="alert-panel" role="alert" aria-live="assertive" hidden></div>
 
-    <section class="compass-container glass-panel" aria-label="Compass">
+    <!-- Compass Hero Card -->
+    <section class="card compass-card" aria-label="Compass">
       <div class="compass-face">
         <svg class="compass-svg" viewBox="0 0 320 320" role="img" aria-label="Phone heading and GPS course compass">
           <g id="compassDial" class="compass-dial">
@@ -70,29 +87,37 @@
       </div>
     </section>
 
+    <!-- Telemetry Metrics Matrix -->
     <section class="metrics-grid" aria-label="GPS metrics">
-      <div class="metric">
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon">my_location</span>
         <span class="data-label">Accuracy</span>
         <span id="gpsAcc" class="data-value">N/A</span>
       </div>
-      <div class="metric">
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon">height</span>
         <span class="data-label">Altitude</span>
         <span id="gpsAlt" class="data-value">N/A</span>
       </div>
-      <div class="metric">
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon">speed</span>
         <span class="data-label">Speed</span>
         <span id="gpsSpd" class="data-value">N/A</span>
       </div>
-      <div class="metric">
+      <div class="metric-card">
+        <span class="material-symbols-outlined metric-icon">settings_input_antenna</span>
         <div class="metric-title-row">
           <span class="data-label">Mode</span>
-          <button id="modeInfoBtn" class="info-icon-btn" type="button" title="Heading modes" aria-label="Explain heading modes" aria-expanded="false" aria-controls="modePopover">i</button>
+          <button id="modeInfoBtn" class="icon-btn info-btn" type="button" title="Heading modes" aria-label="Explain heading modes" aria-expanded="false" aria-controls="modePopover">
+            <span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+          </button>
         </div>
         <span id="gpsMode" class="data-value">WAITING</span>
       </div>
     </section>
 
-    <div id="modePopover" class="mode-popover glass-panel" role="dialog" aria-labelledby="modePopoverTitle" hidden>
+    <!-- Heading Modes Popover Modal -->
+    <div id="modePopover" class="mode-popover" role="dialog" aria-labelledby="modePopoverTitle" hidden>
       <div class="popover-title-row">
         <div id="modePopoverTitle" class="popover-title">Heading Modes</div>
         <button id="modePopoverClose" class="popover-close-btn" type="button" aria-label="Close heading mode explanation">&times;</button>
@@ -100,27 +125,32 @@
       <div class="mode-list">
         <div class="mode-row">
           <div class="mode-name">PHONE</div>
-          <div class="mode-desc">Device heading is the main signal.</div>
+          <div class="mode-desc">Device magnetic compass is the active signal.</div>
         </div>
         <div class="mode-row">
           <div class="mode-name">DUAL</div>
-          <div class="mode-desc">Device heading and moving course are both visible.</div>
+          <div class="mode-desc">Device compass and moving GPS course are both active.</div>
         </div>
         <div class="mode-row">
           <div class="mode-name">COURSE</div>
-          <div class="mode-desc">Moving course is trusted; device heading appears linked.</div>
+          <div class="mode-desc">Moving course is trusted above threshold speed.</div>
         </div>
         <div class="mode-row">
           <div class="mode-name">CHECKING</div>
-          <div class="mode-desc">Comparing heading sources before switching mode.</div>
+          <div class="mode-desc">Comparing heading sources before mode transition.</div>
         </div>
       </div>
     </div>
 
-    <section class="coordinates-panel glass-panel" aria-label="Coordinates">
+    <!-- Coordinates Deck -->
+    <section class="coordinates-panel" aria-label="Coordinates">
+      <!-- WGS-84 Raw Card -->
       <div class="coordinate-card">
-        <div class="card-title-container">
-          <div class="card-title">WGS-84 Raw GPS</div>
+        <div class="card-title-row">
+          <div class="card-title-badge">
+            <span class="indicator-dot"></span>
+            <span>WGS-84 Raw GPS</span>
+          </div>
           <button id="copyWgsBtn" class="copy-icon-btn" type="button" title="Copy WGS-84 coordinates" aria-label="Copy WGS-84 coordinates" disabled>
             <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
               <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
@@ -128,20 +158,24 @@
           </button>
         </div>
         <div class="coordinate-grid">
-          <div class="data-item">
+          <div class="coordinate-item">
             <span class="data-label">Latitude</span>
             <span id="wgsLat" class="data-value">N/A</span>
           </div>
-          <div class="data-item">
+          <div class="coordinate-item">
             <span class="data-label">Longitude</span>
             <span id="wgsLng" class="data-value">N/A</span>
           </div>
         </div>
       </div>
 
+      <!-- GCJ-02 Offset Card (Conditionally shown in designated geofence) -->
       <div id="gcjCard" class="coordinate-card" hidden>
-        <div class="card-title-container">
-          <div class="card-title">GCJ-02 Offset</div>
+        <div class="card-title-row">
+          <div class="card-title-badge">
+            <span class="indicator-dot"></span>
+            <span>GCJ-02 Offset</span>
+          </div>
           <button id="copyGcjBtn" class="copy-icon-btn" type="button" title="Copy GCJ-02 coordinates" aria-label="Copy GCJ-02 coordinates" disabled>
             <svg class="copy-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
               <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
@@ -149,11 +183,11 @@
           </button>
         </div>
         <div class="coordinate-grid">
-          <div class="data-item">
+          <div class="coordinate-item">
             <span class="data-label">Latitude</span>
             <span id="gcjLat" class="data-value active-green">N/A</span>
           </div>
-          <div class="data-item">
+          <div class="coordinate-item">
             <span class="data-label">Longitude</span>
             <span id="gcjLng" class="data-value active-green">N/A</span>
           </div>
@@ -161,34 +195,29 @@
       </div>
     </section>
 
-    <section class="map-panel glass-panel" aria-label="Map links">
-      <div class="panel-title-row">
-        <div class="panel-title">Map Plots</div>
-      </div>
+    <!-- Map Routing Panel -->
+    <section class="map-panel" aria-label="Map links">
+      <div class="panel-title">Map Plots</div>
       <div id="mapBtnGroup" class="map-grid">
         <a id="amapWgs" target="_blank" rel="noopener noreferrer" class="map-btn" aria-disabled="true" tabindex="-1">
           <span>Apple WGS</span>
-          <span class="map-icon" aria-hidden="true">-&gt;</span>
+          <span class="map-icon" aria-hidden="true">➜</span>
         </a>
         <a id="gmapWgs" target="_blank" rel="noopener noreferrer" class="map-btn" aria-disabled="true" tabindex="-1">
           <span>Google WGS</span>
-          <span class="map-icon" aria-hidden="true">-&gt;</span>
+          <span class="map-icon" aria-hidden="true">➜</span>
         </a>
         <a id="amapGcj" target="_blank" rel="noopener noreferrer" class="map-btn map-btn-green gcj-map-btn" aria-disabled="true" tabindex="-1">
           <span>Apple GCJ</span>
-          <span class="map-icon" aria-hidden="true">-&gt;</span>
+          <span class="map-icon" aria-hidden="true">➜</span>
         </a>
         <a id="gmapGcj" target="_blank" rel="noopener noreferrer" class="map-btn map-btn-green gcj-map-btn" aria-disabled="true" tabindex="-1">
           <span>Google GCJ</span>
-          <span class="map-icon" aria-hidden="true">-&gt;</span>
+          <span class="map-icon" aria-hidden="true">➜</span>
         </a>
       </div>
     </section>
   </main>
-
-  <footer>
-    <div id="updateTime" class="update-time" aria-live="polite">LAST FIX: NEVER</div>
-  </footer>
 
   <script type="module" src="js/app.js"></script>
 </body>
