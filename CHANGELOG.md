@@ -5,39 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.2] - 2026-08-17
-
-### Removed
-
-- Removed obsolete heading mode metric and mode popover dialog to eliminate conflicting and redundant state displays.
-- Removed unused HeadingModeResolver class and pruned heading.js down to essential mathematical utilities.
-- Streamlined telemetry metrics grid to 3 core physical measurements: Accuracy, Altitude, and Speed.
-
-### Changed
-
-- Bumped offline Service Worker cache namespace to `where-i-am-v11`.
-
-## [0.3.1] - 2026-08-17
-
-### Fixed
-
-- Eliminated dial locking when moving: the compass dial strictly and continuously tracks physical phone orientation without being hijacked by vehicle course.
-- Implemented true simultaneous dual-pointer rendering with relative course angle computation and dedicated two-row indicator legends (Phone Heading vs GPS Course).
-- Removed redundant compass source status badge from top header to keep the status area focused on GPS and screen wake state.
-- Bumped offline Service Worker cache namespace to `where-i-am-v9`.
-
-## [0.3.0] - 2026-08-17
+## [0.2.2] - 2026-08-17
 
 ### Added
 
 - Overhauled UI design language to Google Material Design 3 (M3 Light Theme) featuring Google Sans typography, soft tonal surface containers, and Material Symbols iconography.
 - Integrated the timestamp readout directly into the Top App Bar header area alongside the title and subtitle for improved screen space utilization.
-- Bumped offline Service Worker cache namespace to `where-i-am-v8`.
+- Added headless Chrome E2E browser automation test suite (`npm run test:e2e`) verifying 23 core DOM hooks, sensor rotation, and geofence routing.
 
 ### Changed
 
+- Streamlined telemetry metrics grid to 3 core physical measurements: Accuracy, Altitude, and Speed.
 - Replaced dark sci-fi styling with clean Google M3 light palette (#F6FAFF background, #F0F4F9 tonal containers, #005BBF primary accent).
 - Updated manifest.json theme and background color tokens to match light mode.
+- Bumped offline Service Worker cache namespace to `where-i-am-v11`.
+
+### Fixed
+
+- Eliminated dial locking when moving: the compass dial strictly and continuously tracks physical phone orientation without being hijacked by vehicle course.
+- Implemented true simultaneous dual-pointer rendering with relative course angle computation and dedicated two-row indicator legends (Phone Heading vs GPS Course).
+- Preserved the Start Sensors play icon by refreshing the button label independently from the icon markup.
+- Cleared dead geolocation watch identifier on unknown device errors to ensure GPS retry always succeeds.
+
+### Removed
+
+- Removed obsolete heading mode metric and mode popover dialog to eliminate conflicting and redundant state displays.
+- Removed unused HeadingModeResolver class and pruned heading.js down to essential mathematical utilities.
+- Removed redundant compass source status badge from top header to keep the status area focused on GPS and screen wake state.
 
 ## [Unreleased]
 
