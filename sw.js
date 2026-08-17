@@ -6,7 +6,7 @@
  */
 
 const CACHE_PREFIX = 'where-i-am-';
-const CACHE_NAME = 'where-i-am-v8';
+const CACHE_NAME = 'where-i-am-v9';
 const APP_SHELL = './index.html';
 const PRECACHE_ASSETS = [
   './',

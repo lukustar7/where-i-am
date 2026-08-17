@@ -5,6 +5,7 @@ import {
   HEADING_MODES,
   HeadingModeResolver,
   getHeadingDelta,
+  getRelativeCourseAngle,
   isReliableCourseHeading,
   normalizeHeading,
   smoothHeading
@@ -24,6 +25,17 @@ test('最短夹角正确跨越正北零点', () => {
   assert.equal(getHeadingDelta(null, 10), null);
 });
 
+test('相对航向角正确计算（支持正向、反向与跨零点）', () => {
+  // 手机指北(0°)，车向东(90°) -> 相对角 90°
+  assert.equal(getRelativeCourseAngle(0, 90), 90);
+  // 手机指东(90°)，车向北(0°) -> 相对角 270°
+  assert.equal(getRelativeCourseAngle(90, 0), 270);
+  // 手机指南(180°)，车向北(0°) -> 相对角 180°
+  assert.equal(getRelativeCourseAngle(180, 0), 180);
+  // 手机指 350°，车指 10° -> 相对角 20°
+  assert.equal(getRelativeCourseAngle(350, 10), 20);
+});
+
 test('低通平滑沿最短路径跨越零点', () => {
   assert.equal(smoothHeading(359, 1, 0.5), 0);
   assert.equal(smoothHeading(null, 90, 0.15), 90);
@@ -37,28 +49,15 @@ test('GPS 运动方向必须同时满足方向和速度条件', () => {
   assert.equal(isReliableCourseHeading(90, null), false);
 });
 
-test('方向模式只有持续贴合后才切换到 COURSE', () => {
+test('双向模式解析：移动且双传感器正常为 DUAL，低速回到 PHONE', () => {
   const resolver = new HeadingModeResolver();
-  assert.equal(resolver.resolve({ phoneHeading: 90, courseHeading: 93, speed: 20, now: 1000 }), HEADING_MODES.CHECKING);
-  assert.equal(resolver.resolve({ phoneHeading: 91, courseHeading: 93, speed: 20, now: 2799 }), HEADING_MODES.CHECKING);
-  assert.equal(resolver.resolve({ phoneHeading: 91, courseHeading: 93, speed: 20, now: 2800 }), HEADING_MODES.COURSE);
+  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 30 }), HEADING_MODES.DUAL_ACTIVE);
+  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 5 }), HEADING_MODES.PHONE_ONLY);
+  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: null, speed: 0 }), HEADING_MODES.PHONE_ONLY);
 });
 
-test('方向持续分离后切换到 DUAL，低速立即回到 PHONE', () => {
+test('缺少手机方向时为 COURSE，全部缺失时为 WAITING', () => {
   const resolver = new HeadingModeResolver();
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 30, now: 1000 }), HEADING_MODES.CHECKING);
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 30, now: 2000 }), HEADING_MODES.DUAL);
-  assert.equal(resolver.resolve({ phoneHeading: 10, courseHeading: 40, speed: 2, now: 2100 }), HEADING_MODES.PHONE);
-});
-
-test('缺少手机方向时可使用可靠 COURSE，全部缺失时等待', () => {
-  const resolver = new HeadingModeResolver();
-  assert.equal(resolver.resolve({ phoneHeading: null, courseHeading: 180, speed: 30 }), HEADING_MODES.COURSE);
+  assert.equal(resolver.resolve({ phoneHeading: null, courseHeading: 180, speed: 30 }), HEADING_MODES.COURSE_ONLY);
   assert.equal(resolver.resolve({ phoneHeading: null, courseHeading: null, speed: null }), HEADING_MODES.WAITING);
-});
-
-test('迟滞区保留已经确认的稳定模式', () => {
-  const resolver = new HeadingModeResolver({ dualConfirmMs: 0 });
-  assert.equal(resolver.resolve({ phoneHeading: 0, courseHeading: 30, speed: 20, now: 100 }), HEADING_MODES.DUAL);
-  assert.equal(resolver.resolve({ phoneHeading: 0, courseHeading: 8, speed: 20, now: 200 }), HEADING_MODES.DUAL);
 });

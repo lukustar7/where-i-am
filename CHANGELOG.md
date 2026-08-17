@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-17
+
+### Fixed
+
+- Eliminated dial locking when moving: the compass dial strictly and continuously tracks physical phone orientation without being hijacked by vehicle course.
+- Implemented true simultaneous dual-pointer rendering with relative course angle computation and dedicated two-row indicator legends (Phone Heading vs GPS Course).
+- Removed redundant compass source status badge from top header to keep the status area focused on GPS and screen wake state.
+- Bumped offline Service Worker cache namespace to `where-i-am-v9`.
+
 ## [0.3.0] - 2026-08-17
 
 ### Added

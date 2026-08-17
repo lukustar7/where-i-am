@@ -11,6 +11,7 @@ import {
 import {
   HEADING_MODES,
   HeadingModeResolver,
+  getRelativeCourseAngle,
   isReliableCourseHeading,
   normalizeHeading,
   smoothHeading
@@ -48,7 +49,6 @@ const elements = Object.freeze({
   activationContainer: requireElement('activationContainer'),
   alertPanel: requireElement('alertPanel'),
   gpsStatus: requireElement('gpsStatus'),
-  compassSource: requireElement('compassSource'),
   lockStatus: requireElement('lockStatus'),
   compassDial: requireElement('compassDial'),
   courseMarker: requireElement('courseMarker'),
@@ -243,21 +243,7 @@ function formatHeadingValue(heading) {
 
 function updateHeadingSource(source) {
   state.currentHeadingSource = source;
-
-  if (source === 'MAG') {
-    setStatusBadge(elements.compassSource, 'MAG', 'active');
-    elements.compassWarning.hidden = true;
-    return;
-  }
-
-  if (source === 'RELATIVE') {
-    setStatusBadge(elements.compassSource, 'RELATIVE');
-    elements.compassWarning.hidden = false;
-    return;
-  }
-
-  setStatusBadge(elements.compassSource, 'COMPASS WAIT', 'neutral');
-  elements.compassWarning.hidden = true;
+  elements.compassWarning.hidden = source !== 'RELATIVE';
 }
 
 function renderCompassHeading() {
@@ -266,36 +252,32 @@ function renderCompassHeading() {
     courseHeading: state.courseHeading,
     speed: state.currentData.speed
   });
-  const primaryHeading = mode === HEADING_MODES.COURSE
-    ? state.courseHeading
-    : state.phoneHeading;
-  const displayHeading = normalizeHeading(primaryHeading ?? state.courseHeading) ?? 0;
 
-  // 使用 SVG 原生 transform，规避部分移动浏览器不稳定刷新 SVG CSS transform 的问题。
-  elements.compassDial.setAttribute('transform', `rotate(${-displayHeading} 160 160)`);
+  // 主表盘永远只跟随手机物理手持方向旋转（无数据时默认保持 0 度）
+  const displayPhoneHeading = normalizeHeading(state.phoneHeading) ?? 0;
+  elements.compassDial.setAttribute('transform', `rotate(${-displayPhoneHeading} 160 160)`);
 
-  if (state.courseHeading === null || mode === HEADING_MODES.COURSE) {
-    elements.courseMarker.classList.add('hidden');
-  } else {
-    const relativeCourse = normalizeHeading(state.courseHeading - displayHeading) ?? 0;
-    elements.courseMarker.setAttribute('transform', `rotate(${relativeCourse} 160 160)`);
+  // 蓝色航向针：车速达到门槛后，按相对于手机正前方的夹角在盘面旋转显现
+  if (state.courseHeading !== null) {
+    const relativeAngle = getRelativeCourseAngle(displayPhoneHeading, state.courseHeading) ?? 0;
+    elements.courseMarker.setAttribute('transform', `rotate(${relativeAngle} 160 160)`);
     elements.courseMarker.classList.remove('hidden');
+  } else {
+    elements.courseMarker.classList.add('hidden');
   }
 
-  if (mode === HEADING_MODES.COURSE) {
-    elements.primaryHeadingLabel.textContent = 'COURSE';
-    elements.secondaryHeadingLabel.textContent = 'PHONE';
-    elements.phoneHeadingValue.textContent = formatHeadingValue(state.courseHeading);
-    elements.courseHeadingValue.textContent = state.phoneHeading === null ? 'N/A' : 'LINKED';
-  } else {
-    elements.primaryHeadingLabel.textContent = 'PHONE';
-    elements.secondaryHeadingLabel.textContent = 'COURSE';
-    elements.phoneHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
+  // 始终同时独立更新两行读数
+  elements.phoneHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
+  if (state.courseHeading !== null) {
     elements.courseHeadingValue.textContent = formatHeadingValue(state.courseHeading);
+  } else if (state.currentData.speed !== null && state.currentData.speed < 8) {
+    elements.courseHeadingValue.textContent = 'STATIONARY';
+  } else {
+    elements.courseHeadingValue.textContent = 'N/A';
   }
 
   elements.gpsMode.textContent = mode;
-  elements.gpsMode.classList.toggle('active', mode === HEADING_MODES.DUAL || mode === HEADING_MODES.COURSE);
+  elements.gpsMode.classList.toggle('active-green', mode === HEADING_MODES.DUAL_ACTIVE);
 }
 
 /**
@@ -537,7 +519,6 @@ async function startOrientationSensors() {
 
   if (!('DeviceOrientationEvent' in window)) {
     state.orientationStatus = 'unavailable';
-    setStatusBadge(elements.compassSource, 'NO COMPASS', 'error');
     setWarning('compassPermission', 'ORIENTATION SENSORS ARE NOT SUPPORTED BY THIS DEVICE OR BROWSER.');
     return false;
   }
@@ -551,7 +532,6 @@ async function startOrientationSensors() {
       const permission = await OrientationEvent.requestPermission();
       if (permission !== 'granted') {
         state.orientationStatus = 'denied';
-        setStatusBadge(elements.compassSource, 'COMPASS DENIED', 'error');
         setWarning('compassPermission', 'COMPASS PERMISSION DENIED. ENABLE MOTION AND ORIENTATION ACCESS, THEN RETRY.');
         return false;
       }
@@ -563,7 +543,6 @@ async function startOrientationSensors() {
       return true;
     } catch (error) {
       state.orientationStatus = 'error';
-      setStatusBadge(elements.compassSource, 'COMPASS ERROR', 'error');
       setWarning('compassPermission', `COMPASS STARTUP ERROR: ${error.message}`);
       return false;
     }

@@ -32,7 +32,6 @@
       </div>
       <div class="status-stack" aria-label="Sensor status">
         <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
-        <div id="compassSource" class="status-badge neutral" aria-live="polite">COMPASS WAIT</div>
         <div id="lockStatus" class="status-badge">WAKE OFF</div>
       </div>
     </div>
@@ -76,11 +75,17 @@
 
       <div class="compass-readouts">
         <div class="heading-readout primary">
-          <span id="primaryHeadingLabel" class="heading-label">PHONE</span>
+          <div class="heading-legend-row">
+            <span class="legend-dot phone-dot"></span>
+            <span id="primaryHeadingLabel" class="heading-label">PHONE HEADING</span>
+          </div>
           <span id="phoneHeadingValue" class="heading-value">N/A</span>
         </div>
         <div class="heading-readout secondary">
-          <span id="secondaryHeadingLabel" class="heading-label">COURSE</span>
+          <div class="heading-legend-row">
+            <span class="legend-dot course-dot">▲</span>
+            <span id="secondaryHeadingLabel" class="heading-label">GPS COURSE</span>
+          </div>
           <span id="courseHeadingValue" class="heading-value">N/A</span>
           <span id="compassWarning" class="compass-warning" hidden>RELATIVE HEADING</span>
         </div>
@@ -124,20 +129,20 @@
       </div>
       <div class="mode-list">
         <div class="mode-row">
-          <div class="mode-name">PHONE</div>
-          <div class="mode-desc">Device magnetic compass is the active signal.</div>
+          <div class="mode-name">DUAL</div>
+          <div class="mode-desc">Moving (speed &ge; 8 km/h). Device compass (Red pointer) and GPS motion trajectory (Blue arrow) are shown simultaneously.</div>
         </div>
         <div class="mode-row">
-          <div class="mode-name">DUAL</div>
-          <div class="mode-desc">Device compass and moving GPS course are both active.</div>
+          <div class="mode-name">PHONE</div>
+          <div class="mode-desc">Stationary or walking (&lt; 8 km/h). Main dial smoothly tracks your handheld phone orientation.</div>
         </div>
         <div class="mode-row">
           <div class="mode-name">COURSE</div>
-          <div class="mode-desc">Moving course is trusted above threshold speed.</div>
+          <div class="mode-desc">GPS motion course active while device compass is calibrating or unavailable.</div>
         </div>
         <div class="mode-row">
-          <div class="mode-name">CHECKING</div>
-          <div class="mode-desc">Comparing heading sources before mode transition.</div>
+          <div class="mode-name">WAITING</div>
+          <div class="mode-desc">Waiting for orientation sensor or GPS satellite fix.</div>
         </div>
       </div>
     </div>

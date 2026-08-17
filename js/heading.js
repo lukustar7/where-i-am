@@ -1,24 +1,18 @@
 /**
- * 指南针方向计算模块。
+ * 指南针方向计算与双向指示解算模块。
  *
- * 所有函数都不依赖 DOM 或浏览器传感器，页面只负责把传感器数字交进来。
- * 方向平滑、最短夹角和模式切换因此可以被独立验证。
+ * 所有函数都不依赖 DOM 或浏览器传感器，保证方向平滑、相对角解算和状态判定的纯粹性。
  */
 
 export const HEADING_MODES = Object.freeze({
   WAITING: 'WAITING',
-  PHONE: 'PHONE',
-  COURSE: 'COURSE',
-  DUAL: 'DUAL',
-  CHECKING: 'CHECKING'
+  PHONE_ONLY: 'PHONE',
+  DUAL_ACTIVE: 'DUAL',
+  COURSE_ONLY: 'COURSE'
 });
 
 export const DEFAULT_HEADING_CONFIG = Object.freeze({
-  courseSpeedThreshold: 8,
-  linkedDeltaThreshold: 5,
-  dualDeltaThreshold: 12,
-  courseConfirmMs: 1800,
-  dualConfirmMs: 1000
+  courseSpeedThreshold: 8 // km/h
 });
 
 /**
@@ -49,6 +43,24 @@ export function getHeadingDelta(firstHeading, secondHeading) {
 }
 
 /**
+ * 计算航向相对于手机正前方的旋转夹角（在表盘坐标系中的角度）。
+ */
+export function getRelativeCourseAngle(phoneHeading, courseHeading) {
+  const phone = normalizeHeading(phoneHeading);
+  const course = normalizeHeading(courseHeading);
+
+  if (course === null) {
+    return null;
+  }
+
+  if (phone === null) {
+    return course;
+  }
+
+  return normalizeHeading(course - phone);
+}
+
+/**
  * 沿最短旋转方向做一次低通平滑，正确处理 359 度跨越到 1 度的情况。
  */
 export function smoothHeading(previousHeading, nextHeading, alpha = 0.15) {
@@ -75,7 +87,7 @@ export function smoothHeading(previousHeading, nextHeading, alpha = 0.15) {
 }
 
 /**
- * GPS 只有同时提供有效速度和运动方向，并达到速度门槛时才可参与模式判断。
+ * GPS 只有同时提供有效速度和运动方向，并达到速度门槛时才可作为可靠航向。
  */
 export function isReliableCourseHeading(heading, speed, threshold = DEFAULT_HEADING_CONFIG.courseSpeedThreshold) {
   return Number.isFinite(heading)
@@ -84,10 +96,11 @@ export function isReliableCourseHeading(heading, speed, threshold = DEFAULT_HEAD
 }
 
 /**
- * 有时间确认和迟滞区间的方向模式状态机。
- *
- * 手机方向与 GPS 方向短暂接近或分离时先进入 CHECKING，持续满足条件后才切换。
- * 这样可防止车辆颠簸、GPS 瞬时漂移造成界面在 COURSE 与 DUAL 之间快速闪烁。
+ * 解析当前指南针运行模式：
+ * - DUAL: 手机手持方向与运动航向均有效（车辆行驶中）
+ * - PHONE: 仅手机手持方向有效（静止或步行）
+ * - COURSE: 手机手持方向缺失但有运动航向
+ * - WAITING: 等待传感器初始化
  */
 export class HeadingModeResolver {
   constructor(config = {}) {
@@ -95,81 +108,28 @@ export class HeadingModeResolver {
       ...DEFAULT_HEADING_CONFIG,
       ...config
     };
-    this.mode = HEADING_MODES.WAITING;
-    this.linkedSince = null;
-    this.divergedSince = null;
   }
 
-  reset(mode = HEADING_MODES.WAITING) {
-    this.mode = mode;
-    this.linkedSince = null;
-    this.divergedSince = null;
-    return this.mode;
-  }
-
-  resetTimers() {
-    this.linkedSince = null;
-    this.divergedSince = null;
-  }
-
-  resolve({ phoneHeading = null, courseHeading = null, speed = null, now = Date.now() } = {}) {
+  resolve({ phoneHeading = null, courseHeading = null, speed = null } = {}) {
     const hasPhoneHeading = normalizeHeading(phoneHeading) !== null;
     const hasReliableCourse = isReliableCourseHeading(
       courseHeading,
       speed,
       this.config.courseSpeedThreshold
     );
-    const safeNow = Number.isFinite(now) ? now : Date.now();
 
-    if (!hasPhoneHeading && !hasReliableCourse) {
-      return this.reset(HEADING_MODES.WAITING);
+    if (hasPhoneHeading && hasReliableCourse) {
+      return HEADING_MODES.DUAL_ACTIVE;
     }
 
-    if (!hasReliableCourse) {
-      return this.reset(hasPhoneHeading ? HEADING_MODES.PHONE : HEADING_MODES.WAITING);
+    if (hasPhoneHeading) {
+      return HEADING_MODES.PHONE_ONLY;
     }
 
-    if (!hasPhoneHeading) {
-      return this.reset(HEADING_MODES.COURSE);
+    if (hasReliableCourse) {
+      return HEADING_MODES.COURSE_ONLY;
     }
 
-    const delta = getHeadingDelta(phoneHeading, courseHeading);
-
-    if (delta <= this.config.linkedDeltaThreshold) {
-      if (this.linkedSince === null) {
-        this.linkedSince = safeNow;
-      }
-      this.divergedSince = null;
-
-      if (safeNow - this.linkedSince >= this.config.courseConfirmMs) {
-        this.mode = HEADING_MODES.COURSE;
-      } else if (this.mode !== HEADING_MODES.COURSE) {
-        this.mode = HEADING_MODES.CHECKING;
-      }
-
-      return this.mode;
-    }
-
-    if (delta >= this.config.dualDeltaThreshold) {
-      if (this.divergedSince === null) {
-        this.divergedSince = safeNow;
-      }
-      this.linkedSince = null;
-
-      if (safeNow - this.divergedSince >= this.config.dualConfirmMs) {
-        this.mode = HEADING_MODES.DUAL;
-      } else if (this.mode !== HEADING_MODES.DUAL) {
-        this.mode = HEADING_MODES.CHECKING;
-      }
-
-      return this.mode;
-    }
-
-    // 5 至 12 度之间是迟滞区，保留已确认的稳定模式，否则继续显示检查中。
-    this.resetTimers();
-    if (this.mode !== HEADING_MODES.COURSE && this.mode !== HEADING_MODES.DUAL) {
-      this.mode = HEADING_MODES.CHECKING;
-    }
-    return this.mode;
+    return HEADING_MODES.WAITING;
   }
 }
