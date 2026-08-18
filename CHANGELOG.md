@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2026-08-18
+## [1.5.0] - 2026-08-18
 
 ### Added
 
@@ -17,11 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Bumped Service Worker offline cache version to `where-i-am-v13` and added `./js/recorder.js` to pre-cached assets.
+- Bumped Service Worker offline cache version to `where-i-am-v1.5.0` and added `./js/recorder.js` to pre-cached assets.
 - Updated build validation script (`scripts/build.mjs`) to verify syntax and presence of `js/recorder.js`.
 - Linked Start Sensors action to automatically trigger the flight recorder to prevent missing logs during driving starts.
 
-## [0.2.2] - 2026-08-17
+## [1.4.1] - 2026-08-17
+
+### Fixed
+
+- Fixed iOS status bar and notch clipping by adding `viewport-fit=cover` and dynamic `env(safe-area-inset-top)` header padding.
+- Refactored Top App Bar into fixed 2-row layout, completely eliminating layout shifting when timestamp text length changes.
+
+## [1.4.0] - 2026-08-17
 
 ### Added
 
@@ -38,8 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed iOS status bar and notch clipping by adding `viewport-fit=cover` and dynamic `env(safe-area-inset-top)` header padding.
-- Refactored Top App Bar into fixed 2-row layout, completely eliminating layout shifting when timestamp text length changes.
 - Eliminated dial locking when moving: the compass dial strictly and continuously tracks physical phone orientation without being hijacked by vehicle course.
 - Implemented true simultaneous dual-pointer rendering with relative course angle computation and dedicated two-row indicator legends (Phone Heading vs GPS Course).
 - Preserved the Start Sensors play icon by refreshing the button label independently from the icon markup.
@@ -51,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused HeadingModeResolver class and pruned heading.js down to essential mathematical utilities.
 - Removed redundant compass source status badge from top header to keep the status area focused on GPS and screen wake state.
 
-## [Unreleased]
+## [1.3.2] - 2026-07-06
 
 ### Added
 
@@ -80,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a same-origin Content Security Policy for scripts, styles, connections, manifests, and workers, and restricted cache cleanup to `where-i-am-` namespaces.
 
-## [0.2.1] - 2026-07-05
+## [1.3.1] - 2026-07-05
 
 ### Added
 
@@ -96,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added relative-orientation fallback handling when absolute compass data is missing, improving cases where the numeric heading updated inconsistently or the dial appeared stuck.
 - Bumped the offline cache namespace to `where-i-am-v6` so this mode and permission update is picked up after deployment.
 
-## [0.2.0] - 2026-07-03
+## [1.3.0] - 2026-07-03
 
 ### Added
 
@@ -114,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the residual inner level-guide line from the compass center to keep the display focused on heading only.
 - Bumped the offline cache namespace to `where-i-am-v5` so this sensor rendering fix is picked up after deployment.
 
-## [0.1.0] - 2026-07-02
+## [1.2.0] - 2026-07-02
 
 ### Added
 
@@ -132,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed retry behavior after denied or failed sensor/location initialization.
 - Limited Service Worker fetch handling to same-origin GET requests to avoid intercepting external map links or non-cacheable requests.
 
-## [0.0.2] - 2026-07-02
+## [1.1.0] - 2026-07-02
 
 ### Added
 
@@ -149,9 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed the "System Self-Test" button from the footer UI for a cleaner user experience (retained the JavaScript function `runSystemSelfTest()` in the browser console for manual developer testing).
 
----
-
-## [0.0.1] - 2026-07-01
+## [1.0.0] - 2026-07-01
 
 ### Added
 
