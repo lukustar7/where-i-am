@@ -6,6 +6,8 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 
 - Real-time dual compass displaying simultaneous handheld phone heading and moving GPS trajectory course.
 - Reports WGS-84 coordinates, optional GCJ-02 coordinates, altitude, accuracy, and speed.
+- In-browser high-precision flight telemetry recorder capturing dual-track raw hardware inputs (GPS, magnetometer, gyroscope, accelerometer) alongside computed display output states.
+- Export formats supporting human-readable TXT logs, structured JSON logs, system share sheet invocation, and diagnostic summaries.
 - Provides Apple Maps and Google Maps links only after a valid GPS fix.
 - Supports offline startup and Screen Wake Lock where the browser permits them.
 
@@ -15,6 +17,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 - `js/app.js`: browser permissions, sensor lifecycle, rendering, and user actions.
 - `js/geo.js`: region detection and WGS-84 to GCJ-02 conversion.
 - `js/heading.js`: heading normalization, relative angle resolution, and low-pass smoothing.
+- `js/recorder.js`: high-frequency telemetry sampling, memory buffer management, IndexedDB persistence, and log formatting.
 - `sw.js`: application-shell caching and offline request handling.
 
 ## Development

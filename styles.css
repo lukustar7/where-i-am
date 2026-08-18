@@ -691,3 +691,224 @@ body {
   top: 0;
   opacity: 0;
 }
+
+/* Telemetry Flight Recorder Styles */
+.rec-badge {
+  background-color: var(--md-sys-color-error-container) !important;
+  border-color: rgba(229, 57, 53, 0.4) !important;
+  color: var(--md-sys-color-error) !important;
+  font-weight: 700 !important;
+  animation: rec-pulse 1.8s infinite ease-in-out;
+}
+
+@keyframes rec-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.97);
+  }
+}
+
+.recorder-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  gap: 8px;
+}
+
+.recorder-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.recorder-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recorder-icon {
+  font-size: 24px;
+  color: var(--md-sys-color-primary);
+}
+
+.recorder-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface);
+}
+
+.recorder-subtitle {
+  font-size: 11px;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.2;
+}
+
+.recorder-ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recorder-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.recorder-badge.standby {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.recorder-badge.recording {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-error);
+  border: 1px solid rgba(229, 57, 53, 0.4);
+  animation: rec-pulse 1.8s infinite ease-in-out;
+}
+
+.btn-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  transition: all 0.16s ease;
+}
+
+.btn-rec:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-rec:active {
+  transform: scale(0.97);
+}
+
+.btn-rec.is-recording {
+  background-color: var(--md-sys-color-error);
+  color: #ffffff;
+  border-color: var(--md-sys-color-error);
+}
+
+.btn-rec.is-recording:hover {
+  background-color: #d32f2f;
+}
+
+.rec-icon-indicator {
+  font-size: 16px;
+  color: var(--md-sys-color-error);
+}
+
+.btn-rec.is-recording .rec-icon-indicator {
+  color: #ffffff;
+}
+
+.recorder-live-panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 8px 10px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-item);
+  text-align: center;
+}
+
+.recorder-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.recorder-value {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.recorder-diag-box {
+  padding: 8px 12px;
+  border-radius: var(--radius-item);
+  background-color: var(--color-warning-container);
+  border: 1px solid rgba(176, 96, 0, 0.2);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--font-body);
+  white-space: pre-line;
+}
+
+.recorder-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 6px;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  transition: all 0.16s ease;
+}
+
+.btn-action:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-action:active {
+  transform: scale(0.97);
+}
+
+.btn-action .action-icon {
+  font-size: 15px;
+}
+
+.btn-share {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: rgba(0, 91, 191, 0.3);
+}
+
+.btn-export-txt {
+  background-color: var(--color-success-container);
+  color: var(--color-success);
+  border-color: rgba(30, 142, 62, 0.3);
+}
+
+.btn-clear-log {
+  color: var(--md-sys-color-error);
+  border-color: rgba(229, 57, 53, 0.3);
+}

@@ -6,7 +6,7 @@
  */
 
 const CACHE_PREFIX = 'where-i-am-';
-const CACHE_NAME = 'where-i-am-v12';
+const CACHE_NAME = 'where-i-am-v13';
 const APP_SHELL = './index.html';
 const PRECACHE_ASSETS = [
   './',
@@ -16,7 +16,8 @@ const PRECACHE_ASSETS = [
   './icon.jpg',
   './js/app.js',
   './js/geo.js',
-  './js/heading.js'
+  './js/heading.js',
+  './js/recorder.js'
 ];
 
 function canCache(response) {

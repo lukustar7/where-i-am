@@ -31,7 +31,8 @@ const REQUIRED_FILES = Object.freeze([
   'icon.jpg',
   'js/app.js',
   'js/geo.js',
-  'js/heading.js'
+  'js/heading.js',
+  'js/recorder.js'
 ]);
 
 async function assertReadable(relativePath) {
@@ -87,7 +88,8 @@ async function validateProject() {
     './icon.jpg',
     './js/app.js',
     './js/geo.js',
-    './js/heading.js'
+    './js/heading.js',
+    './js/recorder.js'
   ];
 
   for (const asset of requiredOfflineAssets) {
@@ -96,7 +98,7 @@ async function validateProject() {
     }
   }
 
-  for (const relativePath of ['sw.js', 'js/app.js', 'js/geo.js', 'js/heading.js']) {
+  for (const relativePath of ['sw.js', 'js/app.js', 'js/geo.js', 'js/heading.js', 'js/recorder.js']) {
     assertJavaScriptSyntax(relativePath);
   }
 }

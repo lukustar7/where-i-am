@@ -153,13 +153,16 @@ const missing = await evaluate(`
       'compassDial', 'courseMarker', 'phoneHeadingValue', 'courseHeadingValue',
       'gpsAcc', 'gpsAlt', 'gpsSpd',
       'wgsLat', 'wgsLng', 'gcjCard', 'gcjLat', 'gcjLng', 'copyWgsBtn', 'copyGcjBtn',
-      'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj'
+      'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj',
+      'recStatus', 'recorderSection', 'recStateBadge', 'toggleRecBtn',
+      'recDuration', 'recGpsCount', 'recOriCount', 'recMemory',
+      'recorderExportTray', 'exportTxtBtn', 'exportJsonBtn', 'shareLogBtn', 'copySummaryBtn', 'clearLogBtn'
     ];
     return required.filter(id => !document.getElementById(id));
   })()
 `);
 if (missing.length > 0) throw new Error(`Missing elements: ${missing.join(', ')}`);
-console.log('   -> 23 个核心业务 ID 100% 完整挂载！');
+console.log(`   -> 所有核心业务及遥测黑匣子 ID 100% 完整挂载！`);
 
 const activationCheck = await evaluate(`
   (() => {
@@ -326,6 +329,60 @@ const copyCheck = await evaluate(`
 `);
 console.log(`   -> 复制成功绿色高亮闪烁: ${copyCheck.hasSuccessFlash}`);
 console.log(`   -> 图标无缝切换为勾号 (✔): ${copyCheck.pathMatchesCheckmark}`);
+
+// 测试 7: 行车黑匣子（Telemetry Flight Recorder）完整生命周期（开启录制 -> 停止导出 -> 清空重置）
+console.log('\n✔ [7/7] 验证行车遥测黑匣子录制、停止与导出面板完整生命周期...');
+const recorderCheck = await evaluate(`
+  (() => {
+    const toggleBtn = document.getElementById('toggleRecBtn');
+    const recBadge = document.getElementById('recStateBadge');
+    const recStatus = document.getElementById('recStatus');
+    const exportTray = document.getElementById('recorderExportTray');
+    const diagBox = document.getElementById('recorderDiagBox');
+    const exportTxtBtn = document.getElementById('exportTxtBtn');
+    const shareLogBtn = document.getElementById('shareLogBtn');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const clearLogBtn = document.getElementById('clearLogBtn');
+
+    // 1. 如果处于初始状态或正在录制，先重置
+    if (recBadge.textContent === 'REC') {
+      toggleBtn.click();
+    }
+
+    // 2. 点击开启录制
+    toggleBtn.click();
+    const isRecording = recBadge.textContent === 'REC' && !recStatus.classList.contains('hidden');
+    const exportTrayHiddenWhileRecording = exportTray.hidden;
+
+    // 3. 点击停止录制并检查导出面板与诊断报告
+    toggleBtn.click();
+    const isStopped = recBadge.textContent === 'STOPPED';
+    const exportTrayVisible = !exportTray.hidden;
+    const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('行车遥测诊断报告');
+    const hasAllActionButtons = Boolean(exportTxtBtn && shareLogBtn && exportJsonBtn);
+
+    // 4. 点击清空重置
+    clearLogBtn.click();
+    const isReset = recBadge.textContent === 'STANDBY' && exportTray.hidden && diagBox.hidden;
+
+    return {
+      isRecording,
+      exportTrayHiddenWhileRecording,
+      isStopped,
+      exportTrayVisible,
+      diagBoxVisible,
+      hasAllActionButtons,
+      isReset
+    };
+  })()
+`);
+console.log(`   -> 开启录制并激活顶栏 REC 呼吸灯: ${recorderCheck.isRecording && recorderCheck.exportTrayHiddenWhileRecording ? '正常' : '异常'}`);
+console.log(`   -> 停止录制并成功呈现诊断报告与导出面板 (TXT/JSON/Share): ${recorderCheck.isStopped && recorderCheck.exportTrayVisible && recorderCheck.diagBoxVisible && recorderCheck.hasAllActionButtons ? '正常' : '异常'}`);
+console.log(`   -> 清空缓存并回到待机状态: ${recorderCheck.isReset ? '正常' : '异常'}`);
+
+if (!recorderCheck.isRecording || !recorderCheck.isStopped || !recorderCheck.exportTrayVisible || !recorderCheck.diagBoxVisible || !recorderCheck.isReset) {
+  throw new Error(`Flight recorder E2E test failed: ${JSON.stringify(recorderCheck)}`);
+}
 
 console.log('\n================== 审查结果汇总 ==================\n');
 console.log(`控制台错误总数: ${consoleErrors.length}`);

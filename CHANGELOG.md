@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-18
+
+### Added
+
+- Added high-precision dual-track Telemetry Flight Recorder module (`js/recorder.js`) to capture raw mobile hardware inputs (GPS, WebKit compass heading, Euler orientation angles, 3-axis gyroscope rotation rates, acceleration) alongside computed display output states.
+- Integrated interactive Flight Recorder control card with dynamic live telemetry metrics (elapsed duration, GPS count, orientation count, memory estimate) and top bar recording pulse indicator.
+- Added multi-channel telemetry log export support: human-readable `.txt` log file generation, structured `.json` export for algorithmic analysis, one-tap mobile system share sheet (`navigator.share` file attachment), and clipboard diagnostic summary.
+- Implemented IndexedDB automatic background persistence (`flight_records`) to prevent telemetry loss during accidental browser tab reloads during long-distance road tests.
+- Added unit test suite for TelemetryRecorder (`tests/recorder.test.js`) and comprehensive E2E browser automation test coverage (`tests/e2e-browser.test.mjs`).
+
+### Changed
+
+- Bumped Service Worker offline cache version to `where-i-am-v13` and added `./js/recorder.js` to pre-cached assets.
+- Updated build validation script (`scripts/build.mjs`) to verify syntax and presence of `js/recorder.js`.
+- Linked Start Sensors action to automatically trigger the flight recorder to prevent missing logs during driving starts.
+
 ## [0.2.2] - 2026-08-17
 
 ### Added

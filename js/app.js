@@ -9,6 +9,7 @@ import {
   normalizeHeading,
   smoothHeading
 } from './heading.js';
+import { TelemetryRecorder } from './recorder.js';
 
 /**
  * 浏览器应用入口。
@@ -67,8 +68,27 @@ const elements = Object.freeze({
   gmapWgs: requireElement('gmapWgs'),
   amapGcj: requireElement('amapGcj'),
   gmapGcj: requireElement('gmapGcj'),
-  updateTime: requireElement('updateTime')
+  updateTime: requireElement('updateTime'),
+  recStatus: requireElement('recStatus'),
+  recorderSection: requireElement('recorderSection'),
+  recStateBadge: requireElement('recStateBadge'),
+  toggleRecBtn: requireElement('toggleRecBtn'),
+  toggleRecLabel: requireElement('toggleRecLabel'),
+  recBtnIcon: requireElement('recBtnIcon'),
+  recDuration: requireElement('recDuration'),
+  recGpsCount: requireElement('recGpsCount'),
+  recOriCount: requireElement('recOriCount'),
+  recMemory: requireElement('recMemory'),
+  recorderExportTray: requireElement('recorderExportTray'),
+  recorderDiagBox: requireElement('recorderDiagBox'),
+  shareLogBtn: requireElement('shareLogBtn'),
+  exportTxtBtn: requireElement('exportTxtBtn'),
+  exportJsonBtn: requireElement('exportJsonBtn'),
+  copySummaryBtn: requireElement('copySummaryBtn'),
+  clearLogBtn: requireElement('clearLogBtn')
 });
+
+const recorder = new TelemetryRecorder();
 
 const warningMessages = new Map();
 const orientationListeners = new Map();
@@ -395,6 +415,16 @@ function handleLocationSuccess(position) {
   clearWarning('location');
   setStatusBadge(elements.gpsStatus, 'GPS ON', 'active');
   renderPosition();
+
+  // 同步写入全量黑匣子原始与解算数据
+  recorder.recordGps(coords, {
+    gcjLat,
+    gcjLng,
+    courseHeading: state.courseHeading,
+    isReliableCourse: isReliableCourseHeading(coords.heading, coords.speed ? coords.speed * 3.6 : null),
+    speed: state.currentData.speed
+  });
+
   refreshActivationControl();
 }
 
@@ -542,6 +572,17 @@ async function startOrientationSensors() {
   return true;
 }
 
+function recordOrientationState(event) {
+  recorder.recordOrientation(event, {
+    phoneHeading: state.phoneHeading,
+    smoothedPhoneHeading: state.smoothedPhoneHeading,
+    headingSource: state.currentHeadingSource,
+    relativeCourseAngle: (state.phoneHeading !== null && state.courseHeading !== null)
+      ? getRelativeCourseAngle(state.phoneHeading, state.courseHeading)
+      : null
+  });
+}
+
 function handleOrientation(event) {
   if (Number.isFinite(event.webkitCompassHeading)) {
     updatePhoneHeading(event.webkitCompassHeading, 'MAG');
@@ -550,18 +591,21 @@ function handleOrientation(event) {
   } else if (Number.isFinite(event.alpha)) {
     updatePhoneHeading(360 - event.alpha, 'RELATIVE');
   }
+  recordOrientationState(event);
 }
 
 function handleOrientationAbsolute(event) {
   if (Number.isFinite(event.alpha)) {
     updatePhoneHeading(360 - event.alpha, 'MAG');
   }
+  recordOrientationState(event);
 }
 
 function handleOrientationFallback(event) {
   if (Number.isFinite(event.alpha)) {
     updatePhoneHeading(360 - event.alpha, 'RELATIVE');
   }
+  recordOrientationState(event);
 }
 
 async function requestWakeLock() {
@@ -635,6 +679,12 @@ async function startSensors() {
   refreshActivationControl();
 
   try {
+    // 启动传感器时若尚未录制，自动激活遥测黑匣子，防止开车忘记按 REC
+    if (!recorder.isRecording) {
+      recorder.startSession();
+      updateRecorderUi();
+    }
+
     // iOS 的方向权限必须最先请求；定位和常亮即使失败也互不阻塞。
     await startOrientationSensors();
     startLocationWatch();
@@ -743,10 +793,167 @@ async function copyCoordinates(kind) {
   }
 }
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  window.setTimeout(() => {
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function getFormattedFileTimestamp() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
+}
+
+function updateRecorderUi() {
+  const stats = recorder.getStats();
+
+  elements.recDuration.textContent = stats.durationText;
+  elements.recGpsCount.textContent = stats.gpsCount.toString();
+  elements.recOriCount.textContent = stats.orientationCount.toString();
+  elements.recMemory.textContent = `${stats.estimatedMemoryKb} KB`;
+
+  if (stats.isRecording) {
+    elements.recStateBadge.textContent = 'REC';
+    elements.recStateBadge.className = 'recorder-badge recording';
+    elements.toggleRecBtn.classList.add('is-recording');
+    elements.toggleRecLabel.textContent = 'Stop REC';
+    elements.recBtnIcon.textContent = 'stop';
+    elements.recStatus.textContent = `● REC ${stats.durationText}`;
+    elements.recStatus.classList.remove('hidden');
+  } else {
+    elements.recStateBadge.textContent = stats.totalSamples > 0 ? 'STOPPED' : 'STANDBY';
+    elements.recStateBadge.className = 'recorder-badge standby';
+    elements.toggleRecBtn.classList.remove('is-recording');
+    elements.toggleRecLabel.textContent = 'Start REC';
+    elements.recBtnIcon.textContent = 'fiber_manual_record';
+    elements.recStatus.classList.add('hidden');
+  }
+}
+
+function renderDiagnosticSummary() {
+  const diag = recorder.generateDiagnosticSummary();
+  const stats = recorder.getStats();
+  elements.recorderDiagBox.textContent = `【行车遥测诊断报告】(${stats.durationText} | 样本: ${stats.totalSamples})\n`
+    + `• 最高车速: ${diag.maxSpeedKmh} km/h (最低: ${diag.minSpeedKmh} km/h)\n`
+    + `• iOS 磁北硬件信号: ${diag.hasWkCompass ? '已捕捉 (有效磁北)' : '无独立磁北 (可能受车载磁场屏蔽)'}\n`
+    + `• 陀螺仪角速度: ${diag.hasMotionRotation ? '已捕捉 (支持手转检测)' : '未提供'}\n`
+    + `• 手机朝向角度极差: ${diag.phoneHeadingRange}`;
+  elements.recorderDiagBox.hidden = false;
+}
+
+function toggleRecording() {
+  if (recorder.isRecording) {
+    recorder.stopSession();
+    updateRecorderUi();
+    elements.recorderExportTray.hidden = false;
+    renderDiagnosticSummary();
+  } else {
+    recorder.startSession();
+    updateRecorderUi();
+    elements.recorderExportTray.hidden = true;
+    elements.recorderDiagBox.hidden = true;
+    requestWakeLock();
+  }
+}
+
+function exportTxtLog() {
+  const txtContent = recorder.exportToTxt();
+  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.txt`;
+  downloadBlob(new Blob([txtContent], { type: 'text/plain;charset=utf-8' }), filename);
+}
+
+function exportJsonLog() {
+  const jsonContent = recorder.exportToJson();
+  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.json`;
+  downloadBlob(new Blob([jsonContent], { type: 'application/json;charset=utf-8' }), filename);
+}
+
+async function shareFlightLog() {
+  const txtContent = recorder.exportToTxt();
+  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.txt`;
+  const file = new File([txtContent], filename, { type: 'text/plain;charset=utf-8' });
+
+  if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        title: 'Where I AM 行车传感器遥测日志',
+        text: `行车遥测黑匣子日志 (${recorder.getStats().durationText})`,
+        files: [file]
+      });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('Share API failed, falling back to download:', err);
+    }
+  }
+
+  // 降级：直接下载 TXT
+  downloadBlob(new Blob([txtContent], { type: 'text/plain;charset=utf-8' }), filename);
+}
+
+async function copyFlightSummary() {
+  const diag = recorder.generateDiagnosticSummary();
+  const stats = recorder.getStats();
+  const summaryText = [
+    `【Where I AM 行车遥测摘要】`,
+    `会话 ID: ${recorder.sessionId || 'N/A'}`,
+    `录制时长: ${stats.durationText}`,
+    `样本总数: ${stats.totalSamples} (GPS: ${stats.gpsCount}, 姿态: ${stats.orientationCount}, 运动: ${stats.motionCount})`,
+    `最高车速: ${diag.maxSpeedKmh} km/h`,
+    `iOS 磁北硬件信号: ${diag.hasWkCompass ? '正常' : '未检测到'}`,
+    `陀螺仪角速度信号: ${diag.hasMotionRotation ? '正常' : '未检测到'}`,
+    `手机朝向波动范围: ${diag.phoneHeadingRange}`
+  ].join('\n');
+
+  try {
+    await writeClipboard(summaryText);
+    flashCopyResult(elements.copySummaryBtn, true);
+  } catch {
+    flashCopyResult(elements.copySummaryBtn, false);
+  }
+}
+
+function clearFlightLog() {
+  if (recorder.isRecording) {
+    recorder.stopSession();
+  }
+  recorder.clear();
+  updateRecorderUi();
+  elements.recorderExportTray.hidden = true;
+  elements.recorderDiagBox.hidden = true;
+  elements.recorderDiagBox.textContent = '';
+}
+
 function bindEvents() {
   elements.activateBtn.addEventListener('click', startSensors);
   elements.copyWgsBtn.addEventListener('click', () => copyCoordinates('wgs'));
   elements.copyGcjBtn.addEventListener('click', () => copyCoordinates('gcj'));
+
+  // 记录器控制与导出绑定
+  elements.toggleRecBtn.addEventListener('click', toggleRecording);
+  elements.exportTxtBtn.addEventListener('click', exportTxtLog);
+  elements.exportJsonBtn.addEventListener('click', exportJsonLog);
+  elements.shareLogBtn.addEventListener('click', shareFlightLog);
+  elements.copySummaryBtn.addEventListener('click', copyFlightSummary);
+  elements.clearLogBtn.addEventListener('click', clearFlightLog);
+
+  // 原始运动传感器监听
+  window.addEventListener('devicemotion', (event) => {
+    recorder.recordMotion(event);
+  }, true);
 
   for (const link of [elements.amapWgs, elements.gmapWgs, elements.amapGcj, elements.gmapGcj]) {
     link.addEventListener('click', (event) => {
@@ -782,9 +989,15 @@ function initialize() {
   setStatusBadge(elements.gpsStatus, 'GPS WAIT', 'neutral');
   renderCompassHeading();
   refreshActivationControl();
+  updateRecorderUi();
   bindEvents();
   registerServiceWorker();
-  window.setInterval(updateFreshnessIndicators, 1000);
+  window.setInterval(() => {
+    updateFreshnessIndicators();
+    if (recorder.isRecording) {
+      updateRecorderUi();
+    }
+  }, 1000);
 }
 
 initialize();

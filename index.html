@@ -25,6 +25,7 @@
       <div class="app-bar-row">
         <h1 class="title">Where I AM</h1>
         <div class="status-stack" aria-label="Sensor status">
+          <div id="recStatus" class="status-badge rec-badge hidden" aria-live="polite">● REC 00:00</div>
           <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
           <div id="lockStatus" class="status-badge">WAKE OFF</div>
         </div>
@@ -107,6 +108,70 @@
         <span class="material-symbols-outlined metric-icon" aria-hidden="true">speed</span>
         <span class="data-label">Speed</span>
         <span id="gpsSpd" class="data-value">N/A</span>
+      </div>
+    </section>
+
+    <!-- Telemetry Flight Recorder Section (行车黑匣子) -->
+    <section id="recorderSection" class="card recorder-card" aria-label="Telemetry Flight Recorder">
+      <div class="recorder-header-row">
+        <div class="recorder-title-group">
+          <span class="material-symbols-outlined recorder-icon" aria-hidden="true">fiber_smart_record</span>
+          <div>
+            <div class="recorder-title">Flight Recorder</div>
+            <div class="recorder-subtitle">Dual-track sensor logger</div>
+          </div>
+        </div>
+        <div class="recorder-ctrl-group">
+          <span id="recStateBadge" class="recorder-badge standby">STANDBY</span>
+          <button id="toggleRecBtn" class="btn-rec" type="button">
+            <span id="recBtnIcon" class="material-symbols-outlined rec-icon-indicator" aria-hidden="true">fiber_manual_record</span>
+            <span id="toggleRecLabel">Start REC</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="recorderLivePanel" class="recorder-live-panel">
+        <div class="recorder-stat-item">
+          <span class="data-label">Duration</span>
+          <span id="recDuration" class="recorder-value">00:00</span>
+        </div>
+        <div class="recorder-stat-item">
+          <span class="data-label">GPS Fixes</span>
+          <span id="recGpsCount" class="recorder-value">0</span>
+        </div>
+        <div class="recorder-stat-item">
+          <span class="data-label">Orientation</span>
+          <span id="recOriCount" class="recorder-value">0</span>
+        </div>
+        <div class="recorder-stat-item">
+          <span class="data-label">Est. Size</span>
+          <span id="recMemory" class="recorder-value">0 KB</span>
+        </div>
+      </div>
+
+      <div id="recorderDiagBox" class="recorder-diag-box" hidden></div>
+
+      <div id="recorderExportTray" class="recorder-actions-grid" hidden>
+        <button id="shareLogBtn" class="btn-action btn-share" type="button">
+          <span class="material-symbols-outlined action-icon" aria-hidden="true">share</span>
+          <span>Share</span>
+        </button>
+        <button id="exportTxtBtn" class="btn-action btn-export-txt" type="button">
+          <span class="material-symbols-outlined action-icon" aria-hidden="true">description</span>
+          <span>TXT Log</span>
+        </button>
+        <button id="exportJsonBtn" class="btn-action btn-export-json" type="button">
+          <span class="material-symbols-outlined action-icon" aria-hidden="true">data_object</span>
+          <span>JSON</span>
+        </button>
+        <button id="copySummaryBtn" class="btn-action btn-copy-summary" type="button">
+          <span class="material-symbols-outlined action-icon" aria-hidden="true">content_copy</span>
+          <span>Summary</span>
+        </button>
+        <button id="clearLogBtn" class="btn-action btn-clear-log" type="button">
+          <span class="material-symbols-outlined action-icon" aria-hidden="true">delete_sweep</span>
+          <span>Clear</span>
+        </button>
       </div>
     </section>
 
