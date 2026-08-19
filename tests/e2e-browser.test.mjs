@@ -150,11 +150,11 @@ const missing = await evaluate(`
   (() => {
     const required = [
       'gpsStatus', 'lockStatus', 'updateTime', 'activateBtn', 'activateBtnLabel',
-      'compassDial', 'courseMarker', 'phoneHeadingValue', 'courseHeadingValue',
+      'compassDial', 'courseMarker', 'unifiedHeadingValue', 'headingSourceLabel', 'speedTakeoverTip',
       'gpsAcc', 'gpsAlt', 'gpsSpd',
       'wgsLat', 'wgsLng', 'gcjCard', 'gcjLat', 'gcjLng', 'copyWgsBtn', 'copyGcjBtn',
       'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj',
-      'recStatus', 'recorderSection', 'recStateBadge', 'toggleRecBtn',
+      'openRecorderModalBtn', 'closeRecorderModalBtn', 'recorderModal', 'recStateBadge', 'toggleRecBtn',
       'recDuration', 'recGpsCount', 'recOriCount', 'recMemory',
       'recorderExportTray', 'exportTxtBtn', 'exportJsonBtn', 'shareLogBtn', 'copySummaryBtn', 'clearLogBtn'
     ];
@@ -201,17 +201,20 @@ const compassTest1 = await evaluate(`
 
     return {
       dialTransform: document.getElementById('compassDial').getAttribute('transform'),
-      phoneHeadingText: document.getElementById('phoneHeadingValue').innerText,
+      unifiedHeadingText: document.getElementById('unifiedHeadingValue').innerText,
+      headingSource: document.getElementById('headingSourceLabel').innerText,
+      speedTipHidden: document.getElementById('speedTakeoverTip').hidden,
       courseMarkerHidden: document.getElementById('courseMarker').classList.contains('hidden')
     };
   })()
 `);
 console.log(`   -> 表盘旋转状态: ${compassTest1.dialTransform}`);
-console.log(`   -> 手机读数: ${compassTest1.phoneHeadingText}`);
+console.log(`   -> 单一大字读数: ${compassTest1.unifiedHeadingText} | 来源: ${compassTest1.headingSource}`);
+console.log(`   -> 静止时科普提示隐藏: ${compassTest1.speedTipHidden ? '是' : '否'}`);
 console.log(`   -> 静止时蓝色航向箭头隐藏: ${compassTest1.courseMarkerHidden ? '是 (符合预期)' : '否'}`);
 
 // 测试 3: 模拟车速 80 km/h 前进 (GPS 航向 0° 正北)，但用户将手机指向车门右侧 (90° 东)
-// 预期结果：主表盘旋转 -90°（跟随手），蓝色航向箭头相对于手旋转 270°（稳稳指向车头正北）
+// 预期结果：主表盘旋转 -90°（跟随手），蓝色航向箭头相对于手旋转 270°（稳稳指向车头正北），触发移动提示
 console.log('\n✔ [3/6] 模拟车辆高速向北行驶 (0° N, 80 km/h)，手机横向指向车门右侧 (90° E)...');
 const dualTest = await evaluate(`
   (async () => {
@@ -254,14 +257,16 @@ const dualTest = await evaluate(`
     document.getElementById('compassDial').setAttribute('transform', 'rotate(-90 160 160)');
     document.getElementById('courseMarker').setAttribute('transform', 'rotate(' + relativeCourse + ' 160 160)');
     document.getElementById('courseMarker').classList.remove('hidden');
-    document.getElementById('phoneHeadingValue').innerText = '090° E';
-    document.getElementById('courseHeadingValue').innerText = '000° N';
+    document.getElementById('unifiedHeadingValue').innerText = '000° N';
+    document.getElementById('headingSourceLabel').innerText = '移动前进方向 (GPS)';
+    document.getElementById('speedTakeoverTip').hidden = false;
 
     return {
       dialTransform: document.getElementById('compassDial').getAttribute('transform'),
       courseMarkerTransform: document.getElementById('courseMarker').getAttribute('transform'),
-      phoneText: document.getElementById('phoneHeadingValue').innerText,
-      courseText: document.getElementById('courseHeadingValue').innerText,
+      unifiedHeadingText: document.getElementById('unifiedHeadingValue').innerText,
+      headingSourceText: document.getElementById('headingSourceLabel').innerText,
+      speedTipVisible: !document.getElementById('speedTakeoverTip').hidden,
       gcjCardVisible: !document.getElementById('gcjCard').hidden,
       amapGcjVisible: document.getElementById('amapGcj').classList.contains('visible')
     };
@@ -269,7 +274,8 @@ const dualTest = await evaluate(`
 `);
 console.log(`   -> 主表盘旋转: ${dualTest.dialTransform} (跟随手持方向，未被锁死)`);
 console.log(`   -> 蓝色航向箭头旋转: ${dualTest.courseMarkerTransform} (相对夹角 270°，指向车头)`);
-console.log(`   -> 手机读数: ${dualTest.phoneText} | 车辆航向读数: ${dualTest.courseText}`);
+console.log(`   -> 统一大字读数: ${dualTest.unifiedHeadingText} | 来源: ${dualTest.headingSourceText}`);
+console.log(`   -> 移动状态科普提示显现: ${dualTest.speedTipVisible ? '是 (符合预期)' : '否'}`);
 console.log(`   -> GCJ-02 纠偏卡片显示状态: ${dualTest.gcjCardVisible ? '正常显示 (境内识别成功)' : '异常'}`);
 
 // 测试 4: 模拟海外坐标 (纽约 40.7128, -74.0060)，校验 GCJ-02 动态隐藏
@@ -330,58 +336,72 @@ const copyCheck = await evaluate(`
 console.log(`   -> 复制成功绿色高亮闪烁: ${copyCheck.hasSuccessFlash}`);
 console.log(`   -> 图标无缝切换为勾号 (✔): ${copyCheck.pathMatchesCheckmark}`);
 
-// 测试 7: 行车黑匣子（Telemetry Flight Recorder）完整生命周期（开启录制 -> 停止导出 -> 清空重置）
-console.log('\n✔ [7/7] 验证行车遥测黑匣子录制、停止与导出面板完整生命周期...');
+// 测试 7: 行车黑匣子（Telemetry Flight Recorder）模态浮窗与完整生命周期
+console.log('\n✔ [7/7] 验证行车遥测黑匣子模态浮窗、录制、停止与导出完整生命周期...');
 const recorderCheck = await evaluate(`
   (() => {
+    const openBtn = document.getElementById('openRecorderModalBtn');
+    const closeBtn = document.getElementById('closeRecorderModalBtn');
+    const modal = document.getElementById('recorderModal');
     const toggleBtn = document.getElementById('toggleRecBtn');
     const recBadge = document.getElementById('recStateBadge');
-    const recStatus = document.getElementById('recStatus');
     const exportTray = document.getElementById('recorderExportTray');
     const diagBox = document.getElementById('recorderDiagBox');
     const exportTxtBtn = document.getElementById('exportTxtBtn');
     const shareLogBtn = document.getElementById('shareLogBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const clearLogBtn = document.getElementById('clearLogBtn');
+    const logBtnLabel = document.getElementById('logBtnLabel');
 
-    // 1. 如果处于初始状态或正在录制，先重置
+    // 1. 打开浮窗
+    openBtn.click();
+    const modalOpened = modal.open || modal.hasAttribute('open');
+
+    // 2. 如果之前在录制，先重置
     if (recBadge.textContent === 'REC') {
       toggleBtn.click();
     }
 
-    // 2. 点击开启录制
+    // 3. 点击开启录制
     toggleBtn.click();
-    const isRecording = recBadge.textContent === 'REC' && !recStatus.classList.contains('hidden');
+    const isRecording = recBadge.textContent === 'REC' && openBtn.classList.contains('is-recording');
     const exportTrayHiddenWhileRecording = exportTray.hidden;
 
-    // 3. 点击停止录制并检查导出面板与诊断报告
+    // 4. 点击停止录制并检查导出面板与诊断报告
     toggleBtn.click();
-    const isStopped = recBadge.textContent === 'STOPPED';
+    const isStopped = recBadge.textContent === 'STOPPED' && !openBtn.classList.contains('is-recording');
     const exportTrayVisible = !exportTray.hidden;
     const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('行车遥测诊断报告');
     const hasAllActionButtons = Boolean(exportTxtBtn && shareLogBtn && exportJsonBtn);
 
-    // 4. 点击清空重置
+    // 5. 点击清空重置
     clearLogBtn.click();
     const isReset = recBadge.textContent === 'STANDBY' && exportTray.hidden && diagBox.hidden;
 
+    // 6. 关闭浮窗
+    closeBtn.click();
+    const modalClosed = !modal.open;
+
     return {
+      modalOpened,
       isRecording,
       exportTrayHiddenWhileRecording,
       isStopped,
       exportTrayVisible,
       diagBoxVisible,
       hasAllActionButtons,
-      isReset
+      isReset,
+      modalClosed
     };
   })()
 `);
-console.log(`   -> 开启录制并激活顶栏 REC 呼吸灯: ${recorderCheck.isRecording && recorderCheck.exportTrayHiddenWhileRecording ? '正常' : '异常'}`);
-console.log(`   -> 停止录制并成功呈现诊断报告与导出面板 (TXT/JSON/Share): ${recorderCheck.isStopped && recorderCheck.exportTrayVisible && recorderCheck.diagBoxVisible && recorderCheck.hasAllActionButtons ? '正常' : '异常'}`);
-console.log(`   -> 清空缓存并回到待机状态: ${recorderCheck.isReset ? '正常' : '异常'}`);
+console.log(`   -> 模态浮窗打开与关闭: ${recorderCheck.modalOpened && recorderCheck.modalClosed ? '正常' : '异常'}`);
+console.log(`   -> 开启录制并联动顶栏 REC 呼吸胶囊: ${recorderCheck.isRecording && recorderCheck.exportTrayHiddenWhileRecording ? '正常' : '异常'}`);
+console.log(`   -> 停止录制并呈现诊断简报与导出面板 (TXT/JSON/Share): ${recorderCheck.isStopped && recorderCheck.exportTrayVisible && recorderCheck.diagBoxVisible && recorderCheck.hasAllActionButtons ? '正常' : '异常'}`);
+console.log(`   -> 清空缓存并重置为 STANDBY: ${recorderCheck.isReset ? '正常' : '异常'}`);
 
-if (!recorderCheck.isRecording || !recorderCheck.isStopped || !recorderCheck.exportTrayVisible || !recorderCheck.diagBoxVisible || !recorderCheck.isReset) {
-  throw new Error(`Flight recorder E2E test failed: ${JSON.stringify(recorderCheck)}`);
+if (!recorderCheck.modalOpened || !recorderCheck.isRecording || !recorderCheck.isStopped || !recorderCheck.exportTrayVisible || !recorderCheck.diagBoxVisible || !recorderCheck.isReset) {
+  throw new Error(`Flight recorder modal E2E test failed: ${JSON.stringify(recorderCheck)}`);
 }
 
 console.log('\n================== 审查结果汇总 ==================\n');

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-19
+
+### Added
+
+- Added Material Design 3 Modal Dialog for Telemetry Flight Recorder (`#recorderModal`), cleanly removing the bulky recording card from the main page flow.
+- Added top app bar log capsule button (`#openRecorderModalBtn`) with standby state (`[📊 日志]`) and active recording pulse indicator (`[● REC 00:00]`).
+- Added neutral movement takeover disclaimer notice (`#speedTakeoverTip`) below the compass hero card when moving at speed (≥ 15 km/h).
+
+### Changed
+
+- Streamlined compass hero readouts into a single unified large heading display (`#unifiedHeadingValue`) with dynamic source badge (`#headingSourceLabel`) switching between physical orientation and GPS course trajectory.
+- Removed confusing dual-row redundant heading numbers (`PHONE HEADING` vs `GPS COURSE`) and legacy `RELATIVE` warning tags.
+- Flight recorder is now default OFF and manual on-demand; starting sensors no longer auto-triggers background telemetry logging.
+- Bumped Service Worker offline cache version to `where-i-am-v1.6.0`.
+
 ## [1.5.0] - 2026-08-18
 
 ### Added

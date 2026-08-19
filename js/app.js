@@ -49,11 +49,9 @@ const elements = Object.freeze({
   courseMarker: requireElement('courseMarker'),
   dialTicks: requireElement('dialTicks'),
   dialLabels: requireElement('dialLabels'),
-  primaryHeadingLabel: requireElement('primaryHeadingLabel'),
-  secondaryHeadingLabel: requireElement('secondaryHeadingLabel'),
-  phoneHeadingValue: requireElement('phoneHeadingValue'),
-  courseHeadingValue: requireElement('courseHeadingValue'),
-  compassWarning: requireElement('compassWarning'),
+  unifiedHeadingValue: requireElement('unifiedHeadingValue'),
+  headingSourceLabel: requireElement('headingSourceLabel'),
+  speedTakeoverTip: requireElement('speedTakeoverTip'),
   gpsAcc: requireElement('gpsAcc'),
   gpsAlt: requireElement('gpsAlt'),
   gpsSpd: requireElement('gpsSpd'),
@@ -69,8 +67,11 @@ const elements = Object.freeze({
   amapGcj: requireElement('amapGcj'),
   gmapGcj: requireElement('gmapGcj'),
   updateTime: requireElement('updateTime'),
-  recStatus: requireElement('recStatus'),
-  recorderSection: requireElement('recorderSection'),
+  openRecorderModalBtn: requireElement('openRecorderModalBtn'),
+  closeRecorderModalBtn: requireElement('closeRecorderModalBtn'),
+  logBtnIcon: requireElement('logBtnIcon'),
+  logBtnLabel: requireElement('logBtnLabel'),
+  recorderModal: requireElement('recorderModal'),
   recStateBadge: requireElement('recStateBadge'),
   toggleRecBtn: requireElement('toggleRecBtn'),
   toggleRecLabel: requireElement('toggleRecLabel'),
@@ -252,7 +253,6 @@ function formatHeadingValue(heading) {
 
 function updateHeadingSource(source) {
   state.currentHeadingSource = source;
-  elements.compassWarning.hidden = source !== 'RELATIVE';
 }
 
 function renderCompassHeading() {
@@ -269,14 +269,30 @@ function renderCompassHeading() {
     elements.courseMarker.classList.add('hidden');
   }
 
-  // 始终同时独立更新两行读数
-  elements.phoneHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
-  if (state.courseHeading !== null) {
-    elements.courseHeadingValue.textContent = formatHeadingValue(state.courseHeading);
-  } else if (state.currentData.speed !== null && state.currentData.speed < 8) {
-    elements.courseHeadingValue.textContent = 'STATIONARY';
+  // 判断是否处于移动状态（车速 >= 15 km/h）
+  const isMovingSpeed = state.currentData.speed !== null && state.currentData.speed >= 15;
+
+  if (isMovingSpeed) {
+    elements.speedTakeoverTip.hidden = false;
+    elements.headingSourceLabel.textContent = '移动前进方向 (GPS)';
+    elements.headingSourceLabel.classList.add('gps-course');
+    // 高速移动时，优先展示对地航向
+    if (state.courseHeading !== null) {
+      elements.unifiedHeadingValue.textContent = formatHeadingValue(state.courseHeading);
+    } else if (state.phoneHeading !== null) {
+      elements.unifiedHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
+    } else {
+      elements.unifiedHeadingValue.textContent = 'N/A';
+    }
   } else {
-    elements.courseHeadingValue.textContent = 'N/A';
+    elements.speedTakeoverTip.hidden = true;
+    elements.headingSourceLabel.classList.remove('gps-course');
+    if (state.currentHeadingSource === 'RELATIVE') {
+      elements.headingSourceLabel.textContent = '相对朝向 (RELATIVE)';
+    } else {
+      elements.headingSourceLabel.textContent = '物理朝向 (COMPASS)';
+    }
+    elements.unifiedHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
   }
 }
 
@@ -679,12 +695,6 @@ async function startSensors() {
   refreshActivationControl();
 
   try {
-    // 启动传感器时若尚未录制，自动激活遥测黑匣子，防止开车忘记按 REC
-    if (!recorder.isRecording) {
-      recorder.startSession();
-      updateRecorderUi();
-    }
-
     // iOS 的方向权限必须最先请求；定位和常亮即使失败也互不阻塞。
     await startOrientationSensors();
     startLocationWatch();
@@ -831,15 +841,18 @@ function updateRecorderUi() {
     elements.toggleRecBtn.classList.add('is-recording');
     elements.toggleRecLabel.textContent = 'Stop REC';
     elements.recBtnIcon.textContent = 'stop';
-    elements.recStatus.textContent = `● REC ${stats.durationText}`;
-    elements.recStatus.classList.remove('hidden');
+    elements.openRecorderModalBtn.classList.add('is-recording');
+    elements.logBtnLabel.textContent = `REC ${stats.durationText}`;
+    elements.logBtnIcon.textContent = 'fiber_manual_record';
   } else {
     elements.recStateBadge.textContent = stats.totalSamples > 0 ? 'STOPPED' : 'STANDBY';
     elements.recStateBadge.className = 'recorder-badge standby';
     elements.toggleRecBtn.classList.remove('is-recording');
     elements.toggleRecLabel.textContent = 'Start REC';
     elements.recBtnIcon.textContent = 'fiber_manual_record';
-    elements.recStatus.classList.add('hidden');
+    elements.openRecorderModalBtn.classList.remove('is-recording');
+    elements.logBtnLabel.textContent = '日志';
+    elements.logBtnIcon.textContent = 'analytics';
   }
 }
 
@@ -941,6 +954,29 @@ function bindEvents() {
   elements.activateBtn.addEventListener('click', startSensors);
   elements.copyWgsBtn.addEventListener('click', () => copyCoordinates('wgs'));
   elements.copyGcjBtn.addEventListener('click', () => copyCoordinates('gcj'));
+
+  // 模态浮窗打开与关闭
+  elements.openRecorderModalBtn.addEventListener('click', () => {
+    if (typeof elements.recorderModal.showModal === 'function') {
+      elements.recorderModal.showModal();
+    } else {
+      elements.recorderModal.setAttribute('open', '');
+    }
+  });
+
+  elements.closeRecorderModalBtn.addEventListener('click', () => {
+    if (typeof elements.recorderModal.close === 'function') {
+      elements.recorderModal.close();
+    } else {
+      elements.recorderModal.removeAttribute('open');
+    }
+  });
+
+  elements.recorderModal.addEventListener('click', (event) => {
+    if (event.target === elements.recorderModal && typeof elements.recorderModal.close === 'function') {
+      elements.recorderModal.close();
+    }
+  });
 
   // 记录器控制与导出绑定
   elements.toggleRecBtn.addEventListener('click', toggleRecording);
