@@ -362,7 +362,7 @@ const recorderCheck = await evaluate(`
     toggleBtn.click();
     const isStopped = recBadge.textContent === 'STOPPED' && !openBtn.classList.contains('is-recording');
     const exportTrayVisible = !exportTray.hidden;
-    const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('Telemetry Diagnostic Report');
+    const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('Sensor Diagnostics Report');
     const hasAllActionButtons = Boolean(exportTxtBtn && shareLogBtn && exportJsonBtn);
 
     // 5. 点击清空重置

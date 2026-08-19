@@ -345,7 +345,7 @@ export class TelemetryRecorder {
 
     const lines = [
       '========================================================================',
-      ' WHERE I AM - FLIGHT RECORDER LOG (DUAL-TRACK TELEMETRY)',
+      ' WHERE I AM - SENSOR LOG (DUAL-TRACK TELEMETRY)',
       '========================================================================',
       `Session ID: ${this.sessionId || 'N/A'}`,
       `Recording Start: ${startDateStr}`,

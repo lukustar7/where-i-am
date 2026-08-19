@@ -816,7 +816,7 @@ function updateRecorderUi() {
     elements.toggleRecLabel.textContent = 'Stop REC';
     elements.recBtnIcon.textContent = 'stop';
     elements.openRecorderModalBtn.classList.add('is-recording');
-    elements.openRecorderModalBtn.textContent = `● Recording Telemetry (${stats.durationText})`;
+    elements.openRecorderModalBtn.textContent = `● Recording (${stats.durationText})`;
   } else {
     elements.recStateBadge.textContent = stats.totalSamples > 0 ? 'STOPPED' : 'STANDBY';
     elements.recStateBadge.className = 'recorder-badge standby';
@@ -824,14 +824,14 @@ function updateRecorderUi() {
     elements.toggleRecLabel.textContent = 'Start REC';
     elements.recBtnIcon.textContent = 'fiber_manual_record';
     elements.openRecorderModalBtn.classList.remove('is-recording');
-    elements.openRecorderModalBtn.textContent = 'Flight Telemetry Logs';
+    elements.openRecorderModalBtn.textContent = 'Sensor Logs';
   }
 }
 
 function renderDiagnosticSummary() {
   const diag = recorder.generateDiagnosticSummary();
   const stats = recorder.getStats();
-  elements.recorderDiagBox.textContent = `[Telemetry Diagnostic Report] (${stats.durationText} | Samples: ${stats.totalSamples})\n`
+  elements.recorderDiagBox.textContent = `[Sensor Diagnostics Report] (${stats.durationText} | Samples: ${stats.totalSamples})\n`
     + `• Max Speed: ${diag.maxSpeedKmh} km/h (Min: ${diag.minSpeedKmh} km/h)\n`
     + `• iOS Compass Signal: ${diag.hasWkCompass ? 'Active' : 'Not detected'}\n`
     + `• Gyroscope Angular Rate: ${diag.hasMotionRotation ? 'Active' : 'Unavailable'}\n`
@@ -856,26 +856,26 @@ function toggleRecording() {
 
 function exportTxtLog() {
   const txtContent = recorder.exportToTxt();
-  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.txt`;
+  const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.txt`;
   downloadBlob(new Blob([txtContent], { type: 'text/plain;charset=utf-8' }), filename);
 }
 
 function exportJsonLog() {
   const jsonContent = recorder.exportToJson();
-  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.json`;
+  const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.json`;
   downloadBlob(new Blob([jsonContent], { type: 'application/json;charset=utf-8' }), filename);
 }
 
 async function shareFlightLog() {
   const txtContent = recorder.exportToTxt();
-  const filename = `where-i-am-flight-${getFormattedFileTimestamp()}.txt`;
+  const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.txt`;
   const file = new File([txtContent], filename, { type: 'text/plain;charset=utf-8' });
 
   if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
-        title: 'Where I AM Telemetry Flight Log',
-        text: `Flight Telemetry Log (${recorder.getStats().durationText})`,
+        title: 'Where I AM Sensor Data Log',
+        text: `Sensor Data Log (${recorder.getStats().durationText})`,
         files: [file]
       });
       return;
@@ -893,7 +893,7 @@ async function copyFlightSummary() {
   const diag = recorder.generateDiagnosticSummary();
   const stats = recorder.getStats();
   const summaryText = [
-    `[Where I AM Telemetry Flight Summary]`,
+    `[Where I AM Sensor Data Summary]`,
     `Session ID: ${recorder.sessionId || 'N/A'}`,
     `Duration: ${stats.durationText}`,
     `Total Samples: ${stats.totalSamples} (GPS: ${stats.gpsCount}, Orientation: ${stats.orientationCount}, Motion: ${stats.motionCount})`,

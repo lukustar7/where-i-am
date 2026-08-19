@@ -92,7 +92,7 @@ test('TelemetryRecorder 导出 TXT 与 JSON 内容完整性', () => {
   recorder.stopSession();
 
   const txt = recorder.exportToTxt();
-  assert.ok(txt.includes('FLIGHT RECORDER LOG'));
+  assert.ok(txt.includes('SENSOR LOG'));
   assert.ok(txt.includes('Max Speed'));
   assert.ok(txt.includes('RAW_WGS(31.230000, 121.470000)'));
   assert.ok(txt.includes('wkHdg=175.0°'));
