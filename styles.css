@@ -513,6 +513,10 @@ body {
   color: var(--md-sys-color-on-surface);
 }
 
+.data-value.active-blue {
+  color: var(--md-sys-color-primary);
+}
+
 .data-value.active-green {
   color: var(--color-success);
 }
@@ -554,6 +558,10 @@ body {
   height: 8px;
   border-radius: 50%;
   background-color: var(--color-success);
+}
+
+.indicator-dot-blue {
+  background-color: var(--md-sys-color-primary);
 }
 
 .coordinate-grid {
