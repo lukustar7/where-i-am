@@ -345,7 +345,7 @@ export class TelemetryRecorder {
 
     const lines = [
       '========================================================================',
-      ' WHERE I AM - 行车传感器与全量双轨遥测黑匣子日志 (FLIGHT RECORDER LOG)',
+      ' WHERE I AM - FLIGHT RECORDER LOG (DUAL-TRACK TELEMETRY)',
       '========================================================================',
       `Session ID: ${this.sessionId || 'N/A'}`,
       `Recording Start: ${startDateStr}`,
@@ -353,13 +353,13 @@ export class TelemetryRecorder {
       `Total Duration:  ${stats.durationText} (${(stats.durationMs / 1000).toFixed(1)}s)`,
       `Total Records:   ${this.records.length} (GPS: ${stats.gpsCount} | ORI: ${stats.orientationCount} | MOT: ${stats.motionCount} | SYS: ${this.systemCount})`,
       '------------------------------------------------------------------------',
-      ' DIAGNOSTIC SUMMARY (行车诊断摘要):',
-      `  • Max Speed (最高车速): ${diag.maxSpeedKmh} km/h`,
-      `  • WebKit Compass Active (iOS 磁北硬件信号): ${diag.hasWkCompass ? 'YES' : 'NO'}`,
-      `  • Gyro RotationRate Active (陀螺仪物理角速度信号): ${diag.hasMotionRotation ? 'YES' : 'NO'}`,
-      `  • Phone Heading Range (手机朝向波动范围): ${diag.phoneHeadingRange}`,
+      ' DIAGNOSTIC SUMMARY:',
+      `  • Max Speed: ${diag.maxSpeedKmh} km/h`,
+      `  • WebKit Compass Active: ${diag.hasWkCompass ? 'YES' : 'NO'}`,
+      `  • Gyro RotationRate Active: ${diag.hasMotionRotation ? 'YES' : 'NO'}`,
+      `  • Phone Heading Range: ${diag.phoneHeadingRange}`,
       '========================================================================',
-      ' TIME-SERIES DUAL-TRACK TELEMETRY (双轨时序数据: 原始硬件输入 vs 界面解算输出)',
+      ' TIME-SERIES DUAL-TRACK TELEMETRY (Raw hardware inputs vs Screen outputs)',
       ' Format Columns:',
       '  [+OFFSET_TIME] [TYPE] Details (Raw inputs | Computed screen outputs)',
       '------------------------------------------------------------------------'

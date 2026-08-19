@@ -150,7 +150,7 @@ const missing = await evaluate(`
   (() => {
     const required = [
       'gpsStatus', 'lockStatus', 'updateTime', 'activateBtn', 'activateBtnLabel',
-      'compassDial', 'courseMarker', 'unifiedHeadingValue', 'headingSourceLabel', 'speedTakeoverTip',
+      'compassDial', 'courseMarker', 'unifiedHeadingValue',
       'gpsAcc', 'gpsAlt', 'gpsSpd',
       'wgsLat', 'wgsLng', 'gcjCard', 'gcjLat', 'gcjLng', 'copyWgsBtn', 'copyGcjBtn',
       'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj',
@@ -202,19 +202,16 @@ const compassTest1 = await evaluate(`
     return {
       dialTransform: document.getElementById('compassDial').getAttribute('transform'),
       unifiedHeadingText: document.getElementById('unifiedHeadingValue').innerText,
-      headingSource: document.getElementById('headingSourceLabel').innerText,
-      speedTipHidden: document.getElementById('speedTakeoverTip').hidden,
       courseMarkerHidden: document.getElementById('courseMarker').classList.contains('hidden')
     };
   })()
 `);
 console.log(`   -> 表盘旋转状态: ${compassTest1.dialTransform}`);
-console.log(`   -> 单一大字读数: ${compassTest1.unifiedHeadingText} | 来源: ${compassTest1.headingSource}`);
-console.log(`   -> 静止时科普提示隐藏: ${compassTest1.speedTipHidden ? '是' : '否'}`);
+console.log(`   -> 单一大字读数: ${compassTest1.unifiedHeadingText}`);
 console.log(`   -> 静止时蓝色航向箭头隐藏: ${compassTest1.courseMarkerHidden ? '是 (符合预期)' : '否'}`);
 
 // 测试 3: 模拟车速 80 km/h 前进 (GPS 航向 0° 正北)，但用户将手机指向车门右侧 (90° 东)
-// 预期结果：主表盘旋转 -90°（跟随手），蓝色航向箭头相对于手旋转 270°（稳稳指向车头正北），触发移动提示
+// 预期结果：主表盘旋转 -90°（跟随手），蓝色航向箭头相对于手旋转 270°（稳稳指向车头正北）
 console.log('\n✔ [3/6] 模拟车辆高速向北行驶 (0° N, 80 km/h)，手机横向指向车门右侧 (90° E)...');
 const dualTest = await evaluate(`
   (async () => {
@@ -257,16 +254,12 @@ const dualTest = await evaluate(`
     document.getElementById('compassDial').setAttribute('transform', 'rotate(-90 160 160)');
     document.getElementById('courseMarker').setAttribute('transform', 'rotate(' + relativeCourse + ' 160 160)');
     document.getElementById('courseMarker').classList.remove('hidden');
-    document.getElementById('unifiedHeadingValue').innerText = '000° N';
-    document.getElementById('headingSourceLabel').innerText = '移动前进方向 (GPS)';
-    document.getElementById('speedTakeoverTip').hidden = false;
+    document.getElementById('unifiedHeadingValue').innerText = '090° E';
 
     return {
       dialTransform: document.getElementById('compassDial').getAttribute('transform'),
       courseMarkerTransform: document.getElementById('courseMarker').getAttribute('transform'),
       unifiedHeadingText: document.getElementById('unifiedHeadingValue').innerText,
-      headingSourceText: document.getElementById('headingSourceLabel').innerText,
-      speedTipVisible: !document.getElementById('speedTakeoverTip').hidden,
       gcjCardVisible: !document.getElementById('gcjCard').hidden,
       amapGcjVisible: document.getElementById('amapGcj').classList.contains('visible')
     };
@@ -274,8 +267,7 @@ const dualTest = await evaluate(`
 `);
 console.log(`   -> 主表盘旋转: ${dualTest.dialTransform} (跟随手持方向，未被锁死)`);
 console.log(`   -> 蓝色航向箭头旋转: ${dualTest.courseMarkerTransform} (相对夹角 270°，指向车头)`);
-console.log(`   -> 统一大字读数: ${dualTest.unifiedHeadingText} | 来源: ${dualTest.headingSourceText}`);
-console.log(`   -> 移动状态科普提示显现: ${dualTest.speedTipVisible ? '是 (符合预期)' : '否'}`);
+console.log(`   -> 统一大字读数: ${dualTest.unifiedHeadingText}`);
 console.log(`   -> GCJ-02 纠偏卡片显示状态: ${dualTest.gcjCardVisible ? '正常显示 (境内识别成功)' : '异常'}`);
 
 // 测试 4: 模拟海外坐标 (纽约 40.7128, -74.0060)，校验 GCJ-02 动态隐藏
@@ -351,7 +343,6 @@ const recorderCheck = await evaluate(`
     const shareLogBtn = document.getElementById('shareLogBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const clearLogBtn = document.getElementById('clearLogBtn');
-    const logBtnLabel = document.getElementById('logBtnLabel');
 
     // 1. 打开浮窗
     openBtn.click();
@@ -371,7 +362,7 @@ const recorderCheck = await evaluate(`
     toggleBtn.click();
     const isStopped = recBadge.textContent === 'STOPPED' && !openBtn.classList.contains('is-recording');
     const exportTrayVisible = !exportTray.hidden;
-    const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('行车遥测诊断报告');
+    const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('Telemetry Diagnostic Report');
     const hasAllActionButtons = Boolean(exportTxtBtn && shareLogBtn && exportJsonBtn);
 
     // 5. 点击清空重置
@@ -396,8 +387,8 @@ const recorderCheck = await evaluate(`
   })()
 `);
 console.log(`   -> 模态浮窗打开与关闭: ${recorderCheck.modalOpened && recorderCheck.modalClosed ? '正常' : '异常'}`);
-console.log(`   -> 开启录制并联动顶栏 REC 呼吸胶囊: ${recorderCheck.isRecording && recorderCheck.exportTrayHiddenWhileRecording ? '正常' : '异常'}`);
-console.log(`   -> 停止录制并呈现诊断简报与导出面板 (TXT/JSON/Share): ${recorderCheck.isStopped && recorderCheck.exportTrayVisible && recorderCheck.diagBoxVisible && recorderCheck.hasAllActionButtons ? '正常' : '异常'}`);
+console.log(`   -> 开启录制并联动底栏文本按钮高亮: ${recorderCheck.isRecording && recorderCheck.exportTrayHiddenWhileRecording ? '正常' : '异常'}`);
+console.log(`   -> 停止录制并呈现英文诊断简报与导出面板 (TXT/JSON/Share): ${recorderCheck.isStopped && recorderCheck.exportTrayVisible && recorderCheck.diagBoxVisible && recorderCheck.hasAllActionButtons ? '正常' : '异常'}`);
 console.log(`   -> 清空缓存并重置为 STANDBY: ${recorderCheck.isReset ? '正常' : '异常'}`);
 
 if (!recorderCheck.modalOpened || !recorderCheck.isRecording || !recorderCheck.isStopped || !recorderCheck.exportTrayVisible || !recorderCheck.diagBoxVisible || !recorderCheck.isReset) {

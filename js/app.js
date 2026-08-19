@@ -50,8 +50,6 @@ const elements = Object.freeze({
   dialTicks: requireElement('dialTicks'),
   dialLabels: requireElement('dialLabels'),
   unifiedHeadingValue: requireElement('unifiedHeadingValue'),
-  headingSourceLabel: requireElement('headingSourceLabel'),
-  speedTakeoverTip: requireElement('speedTakeoverTip'),
   gpsAcc: requireElement('gpsAcc'),
   gpsAlt: requireElement('gpsAlt'),
   gpsSpd: requireElement('gpsSpd'),
@@ -69,8 +67,6 @@ const elements = Object.freeze({
   updateTime: requireElement('updateTime'),
   openRecorderModalBtn: requireElement('openRecorderModalBtn'),
   closeRecorderModalBtn: requireElement('closeRecorderModalBtn'),
-  logBtnIcon: requireElement('logBtnIcon'),
-  logBtnLabel: requireElement('logBtnLabel'),
   recorderModal: requireElement('recorderModal'),
   recStateBadge: requireElement('recStateBadge'),
   toggleRecBtn: requireElement('toggleRecBtn'),
@@ -256,11 +252,11 @@ function updateHeadingSource(source) {
 }
 
 function renderCompassHeading() {
-  // 主表盘永远只跟随手机物理手持方向旋转（无数据时默认保持 0 度）
+  // Rotate compass dial according to phone heading (defaults to 0 if null)
   const displayPhoneHeading = normalizeHeading(state.phoneHeading) ?? 0;
   elements.compassDial.setAttribute('transform', `rotate(${-displayPhoneHeading} 160 160)`);
 
-  // 蓝色航向针：车速达到门槛后，按相对于手机正前方的夹角在盘面旋转显现
+  // Blue course needle: when moving, rotate relative to phone lubber line
   if (state.courseHeading !== null) {
     const relativeAngle = getRelativeCourseAngle(displayPhoneHeading, state.courseHeading) ?? 0;
     elements.courseMarker.setAttribute('transform', `rotate(${relativeAngle} 160 160)`);
@@ -269,31 +265,9 @@ function renderCompassHeading() {
     elements.courseMarker.classList.add('hidden');
   }
 
-  // 判断是否处于移动状态（车速 >= 15 km/h）
-  const isMovingSpeed = state.currentData.speed !== null && state.currentData.speed >= 15;
-
-  if (isMovingSpeed) {
-    elements.speedTakeoverTip.hidden = false;
-    elements.headingSourceLabel.textContent = '移动前进方向 (GPS)';
-    elements.headingSourceLabel.classList.add('gps-course');
-    // 高速移动时，优先展示对地航向
-    if (state.courseHeading !== null) {
-      elements.unifiedHeadingValue.textContent = formatHeadingValue(state.courseHeading);
-    } else if (state.phoneHeading !== null) {
-      elements.unifiedHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
-    } else {
-      elements.unifiedHeadingValue.textContent = 'N/A';
-    }
-  } else {
-    elements.speedTakeoverTip.hidden = true;
-    elements.headingSourceLabel.classList.remove('gps-course');
-    if (state.currentHeadingSource === 'RELATIVE') {
-      elements.headingSourceLabel.textContent = '相对朝向 (RELATIVE)';
-    } else {
-      elements.headingSourceLabel.textContent = '物理朝向 (COMPASS)';
-    }
-    elements.unifiedHeadingValue.textContent = formatHeadingValue(state.phoneHeading);
-  }
+  // Display hero heading value (phone heading preferred, fallback to course heading)
+  const currentHeading = state.phoneHeading ?? state.courseHeading;
+  elements.unifiedHeadingValue.textContent = formatHeadingValue(currentHeading);
 }
 
 /**
@@ -842,8 +816,7 @@ function updateRecorderUi() {
     elements.toggleRecLabel.textContent = 'Stop REC';
     elements.recBtnIcon.textContent = 'stop';
     elements.openRecorderModalBtn.classList.add('is-recording');
-    elements.logBtnLabel.textContent = `REC ${stats.durationText}`;
-    elements.logBtnIcon.textContent = 'fiber_manual_record';
+    elements.openRecorderModalBtn.textContent = `● Recording Telemetry (${stats.durationText})`;
   } else {
     elements.recStateBadge.textContent = stats.totalSamples > 0 ? 'STOPPED' : 'STANDBY';
     elements.recStateBadge.className = 'recorder-badge standby';
@@ -851,19 +824,18 @@ function updateRecorderUi() {
     elements.toggleRecLabel.textContent = 'Start REC';
     elements.recBtnIcon.textContent = 'fiber_manual_record';
     elements.openRecorderModalBtn.classList.remove('is-recording');
-    elements.logBtnLabel.textContent = '日志';
-    elements.logBtnIcon.textContent = 'analytics';
+    elements.openRecorderModalBtn.textContent = 'Flight Telemetry Logs';
   }
 }
 
 function renderDiagnosticSummary() {
   const diag = recorder.generateDiagnosticSummary();
   const stats = recorder.getStats();
-  elements.recorderDiagBox.textContent = `【行车遥测诊断报告】(${stats.durationText} | 样本: ${stats.totalSamples})\n`
-    + `• 最高车速: ${diag.maxSpeedKmh} km/h (最低: ${diag.minSpeedKmh} km/h)\n`
-    + `• iOS 磁北硬件信号: ${diag.hasWkCompass ? '已捕捉 (有效磁北)' : '无独立磁北 (可能受车载磁场屏蔽)'}\n`
-    + `• 陀螺仪角速度: ${diag.hasMotionRotation ? '已捕捉 (支持手转检测)' : '未提供'}\n`
-    + `• 手机朝向角度极差: ${diag.phoneHeadingRange}`;
+  elements.recorderDiagBox.textContent = `[Telemetry Diagnostic Report] (${stats.durationText} | Samples: ${stats.totalSamples})\n`
+    + `• Max Speed: ${diag.maxSpeedKmh} km/h (Min: ${diag.minSpeedKmh} km/h)\n`
+    + `• iOS Compass Signal: ${diag.hasWkCompass ? 'Active' : 'Not detected'}\n`
+    + `• Gyroscope Angular Rate: ${diag.hasMotionRotation ? 'Active' : 'Unavailable'}\n`
+    + `• Heading Variance Range: ${diag.phoneHeadingRange}`;
   elements.recorderDiagBox.hidden = false;
 }
 
@@ -902,8 +874,8 @@ async function shareFlightLog() {
   if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
-        title: 'Where I AM 行车传感器遥测日志',
-        text: `行车遥测黑匣子日志 (${recorder.getStats().durationText})`,
+        title: 'Where I AM Telemetry Flight Log',
+        text: `Flight Telemetry Log (${recorder.getStats().durationText})`,
         files: [file]
       });
       return;
@@ -913,7 +885,7 @@ async function shareFlightLog() {
     }
   }
 
-  // 降级：直接下载 TXT
+  // Fallback: direct TXT download
   downloadBlob(new Blob([txtContent], { type: 'text/plain;charset=utf-8' }), filename);
 }
 
@@ -921,14 +893,14 @@ async function copyFlightSummary() {
   const diag = recorder.generateDiagnosticSummary();
   const stats = recorder.getStats();
   const summaryText = [
-    `【Where I AM 行车遥测摘要】`,
-    `会话 ID: ${recorder.sessionId || 'N/A'}`,
-    `录制时长: ${stats.durationText}`,
-    `样本总数: ${stats.totalSamples} (GPS: ${stats.gpsCount}, 姿态: ${stats.orientationCount}, 运动: ${stats.motionCount})`,
-    `最高车速: ${diag.maxSpeedKmh} km/h`,
-    `iOS 磁北硬件信号: ${diag.hasWkCompass ? '正常' : '未检测到'}`,
-    `陀螺仪角速度信号: ${diag.hasMotionRotation ? '正常' : '未检测到'}`,
-    `手机朝向波动范围: ${diag.phoneHeadingRange}`
+    `[Where I AM Telemetry Flight Summary]`,
+    `Session ID: ${recorder.sessionId || 'N/A'}`,
+    `Duration: ${stats.durationText}`,
+    `Total Samples: ${stats.totalSamples} (GPS: ${stats.gpsCount}, Orientation: ${stats.orientationCount}, Motion: ${stats.motionCount})`,
+    `Max Speed: ${diag.maxSpeedKmh} km/h`,
+    `iOS Compass Signal: ${diag.hasWkCompass ? 'Active' : 'Not detected'}`,
+    `Gyroscope Signal: ${diag.hasMotionRotation ? 'Active' : 'Not detected'}`,
+    `Heading Range: ${diag.phoneHeadingRange}`
   ].join('\n');
 
   try {

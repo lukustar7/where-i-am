@@ -25,10 +25,6 @@
       <div class="app-bar-row">
         <h1 class="title">Where I AM</h1>
         <div class="status-stack" aria-label="Sensor status">
-          <button id="openRecorderModalBtn" class="log-capsule-btn" type="button" aria-label="Open flight recorder logs">
-            <span id="logBtnIcon" class="material-symbols-outlined log-capsule-icon" aria-hidden="true">analytics</span>
-            <span id="logBtnLabel">日志</span>
-          </button>
           <div id="gpsStatus" class="status-badge neutral" aria-live="polite">GPS WAIT</div>
           <div id="lockStatus" class="status-badge">WAKE OFF</div>
         </div>
@@ -77,12 +73,9 @@
       </div>
 
       <div class="compass-readouts-unified">
-        <div class="unified-heading-row">
-          <span id="unifiedHeadingValue" class="heading-value-hero">N/A</span>
-          <span id="headingSourceLabel" class="heading-source-badge">PHYSICAL HEADING</span>
-        </div>
-        <div id="speedTakeoverTip" class="speed-takeover-tip" hidden>
-          * 提示：在移动状态下，部分设备系统可能默认显示移动前进方向 *
+        <span id="unifiedHeadingValue" class="heading-value-hero">N/A</span>
+        <div class="heading-helper-note">
+          Note: When moving at speed, some devices may prioritize vehicle course over handheld orientation.
         </div>
       </div>
     </section>
@@ -105,7 +98,6 @@
         <span id="gpsSpd" class="data-value">N/A</span>
       </div>
     </section>
-
 
     <!-- Coordinates Deck -->
     <section class="coordinates-panel" aria-label="Coordinates">
@@ -182,9 +174,16 @@
         </a>
       </div>
     </section>
+
+    <!-- Bottom Page Footer: Flight Telemetry Logs Entrance -->
+    <footer class="page-footer">
+      <button id="openRecorderModalBtn" class="footer-text-btn" type="button">
+        Flight Telemetry Logs
+      </button>
+    </footer>
   </main>
 
-  <!-- Telemetry Flight Recorder Modal Dialog (M3 弹出浮窗) -->
+  <!-- Telemetry Flight Recorder Modal Dialog -->
   <dialog id="recorderModal" class="m3-dialog" aria-labelledby="modalTitle">
     <div class="m3-dialog-inner">
       <div class="m3-dialog-header">

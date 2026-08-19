@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added Material Design 3 Modal Dialog for Telemetry Flight Recorder (`#recorderModal`), cleanly removing the bulky recording card from the main page flow.
-- Added top app bar log capsule button (`#openRecorderModalBtn`) with standby state (`[📊 日志]`) and active recording pulse indicator (`[● REC 00:00]`).
-- Added neutral movement takeover disclaimer notice (`#speedTakeoverTip`) below the compass hero card when moving at speed (≥ 15 km/h).
+- Added Material Design 3 Modal Dialog for Telemetry Flight Recorder (`#recorderModal`), cleanly isolating sensor diagnostics into an on-demand overlay.
+- Added unobtrusive bottom footer text link (`#openRecorderModalBtn`) for flight logs with subtle recording state indication.
+- Added standard English movement note explaining device sensor fusion behavior when moving at vehicular speed.
 
 ### Changed
 
-- Streamlined compass hero readouts into a single unified large heading display (`#unifiedHeadingValue`) with dynamic source badge (`#headingSourceLabel`) switching between physical orientation and GPS course trajectory.
-- Removed confusing dual-row redundant heading numbers (`PHONE HEADING` vs `GPS COURSE`) and legacy `RELATIVE` warning tags.
-- Flight recorder is now default OFF and manual on-demand; starting sensors no longer auto-triggers background telemetry logging.
+- Standardized all UI components, coordinate cards, telemetry statistics, and export formats to standard English.
+- Simplified compass hero reading by removing arbitrary physical/course source badges, leaving a clean heading value with a subtle interpretive note.
+- Adjusted top app bar top padding to `calc(env(safe-area-inset-top, 24px) + 14px)` for reliable status bar and notch clearance on iOS devices.
+- Flight recorder is strictly default OFF and manual on-demand; starting sensors no longer auto-triggers background telemetry logging.
 - Bumped Service Worker offline cache version to `where-i-am-v1.6.0`.
 
 ## [1.5.0] - 2026-08-18
