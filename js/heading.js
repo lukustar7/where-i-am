@@ -87,3 +87,47 @@ export function isReliableCourseHeading(heading, speed, threshold = DEFAULT_HEAD
     && Number.isFinite(speed)
     && speed >= threshold;
 }
+
+/**
+ * 依据屏幕旋转角度（0°、90°、180°、270°）对物理设备朝向进行补偿。
+ * 当车载手机横向放置在支架上时，修正屏幕视口上方与真实地理朝向的一致性。
+ */
+export function applyScreenOrientation(heading, screenAngle = 0) {
+  const normalizedHeading = normalizeHeading(heading);
+  if (normalizedHeading === null) {
+    return null;
+  }
+  const angle = Number.isFinite(screenAngle) ? screenAngle : 0;
+  return normalizeHeading(normalizedHeading + angle);
+}
+
+/**
+ * Android 端 3D 姿态矩阵倾斜投影补偿。
+ * 融合俯仰角 (beta) 与横滚角 (gamma)，修正车载手机在 45°~80° 斜放支架上的几何投影失真。
+ */
+export function getTiltCompensatedHeading(alpha, beta, gamma) {
+  if (!Number.isFinite(alpha)) {
+    return null;
+  }
+  if (!Number.isFinite(beta) || !Number.isFinite(gamma)) {
+    return normalizeHeading(360 - alpha);
+  }
+
+  const a = alpha * (Math.PI / 180);
+  const b = beta * (Math.PI / 180);
+  const g = gamma * (Math.PI / 180);
+
+  // 手机近乎垂直竖立 (俯仰角绝对值接近 90 度时，顶部指向天空，依靠背面朝向)
+  if (Math.abs(Math.cos(b)) < 0.1) {
+    const X = Math.sin(a) * Math.sin(b) * Math.cos(g) - Math.cos(a) * Math.sin(g);
+    const Y = -Math.cos(a) * Math.sin(b) * Math.cos(g) - Math.sin(a) * Math.sin(g);
+    let heading = Math.atan2(X, Y) * (180 / Math.PI);
+    return normalizeHeading(heading);
+  }
+
+  // 常规车载支架与手持工况 (0° <= |beta| < 80°)：投影手机顶部 Y 轴至地平切平面
+  const X = -Math.sin(a) * Math.cos(b);
+  const Y = Math.cos(a) * Math.cos(b);
+  let heading = Math.atan2(X, Y) * (180 / Math.PI);
+  return normalizeHeading(heading);
+}

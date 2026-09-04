@@ -6,14 +6,11 @@
   <meta name="description" content="Offline-capable GPS compass with WGS-84 and GCJ-02 coordinates in Material Design 3.">
   <meta name="theme-color" content="#f6faff">
   <meta name="color-scheme" content="light">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
   <title>Where I AM - GPS Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
   <link rel="apple-touch-icon" href="icon.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Where I AM">
@@ -41,7 +38,9 @@
     <!-- Main Activation Trigger -->
     <div id="activationContainer" class="activation-row">
       <button id="activateBtn" class="btn-primary" type="button">
-        <span class="material-symbols-outlined icon-fill" aria-hidden="true">play_arrow</span>
+        <svg class="btn-icon-svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
         <span id="activateBtnLabel">Start Sensors</span>
       </button>
     </div>
@@ -51,6 +50,12 @@
       <div class="alert-panel">JAVASCRIPT IS REQUIRED TO READ LOCATION AND COMPASS DATA.</div>
     </noscript>
     <div id="alertPanel" class="alert-panel" role="alert" aria-live="assertive" hidden></div>
+
+    <!-- Magnetic Interference Alert Banner -->
+    <div id="magneticAlert" class="magnetic-alert" role="status" aria-live="polite" hidden>
+      <span class="magnetic-alert-icon" aria-hidden="true">⚠️</span>
+      <span class="magnetic-alert-text">Magnetic interference detected (e.g. car vent mount). Tilt or wave phone in figure-8 to calibrate.</span>
+    </div>
 
     <!-- Compass Hero Card -->
     <section class="card compass-card" aria-label="Compass">
@@ -73,7 +78,7 @@
       </div>
 
       <div class="compass-readouts-unified">
-        <span id="unifiedHeadingValue" class="heading-value-hero">N/A</span>
+        <span id="unifiedHeadingValue" class="heading-value-hero" aria-label="Current heading">N/A</span>
         <div class="heading-helper-note">
           Note: When moving at speed, some devices may prioritize vehicle course over handheld orientation.
         </div>
@@ -83,17 +88,23 @@
     <!-- Telemetry Metrics Matrix (3 Core Physical Metrics) -->
     <section class="metrics-grid" aria-label="GPS metrics">
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon" aria-hidden="true">my_location</span>
+        <svg class="metric-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+        </svg>
         <span class="data-label">Accuracy</span>
         <span id="gpsAcc" class="data-value">N/A</span>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon" aria-hidden="true">height</span>
+        <svg class="metric-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M13 6.99h3L12 3 8 6.99h3v10.02H8L12 21l4-3.99h-3z"/>
+        </svg>
         <span class="data-label">Altitude</span>
         <span id="gpsAlt" class="data-value">N/A</span>
       </div>
       <div class="metric-card">
-        <span class="material-symbols-outlined metric-icon" aria-hidden="true">speed</span>
+        <svg class="metric-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="m20.38 8.57-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.28-10.43zM10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/>
+        </svg>
         <span class="data-label">Speed</span>
         <span id="gpsSpd" class="data-value">N/A</span>
       </div>
@@ -188,14 +199,19 @@
     <div class="m3-dialog-inner">
       <div class="m3-dialog-header">
         <div class="recorder-title-group">
-          <span class="material-symbols-outlined recorder-icon" aria-hidden="true">fiber_smart_record</span>
+          <svg class="recorder-header-icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+            <circle cx="9" cy="12" r="5"/>
+            <path d="M17 4.26v2.09a6 6 0 0 1 0 11.3v2.09A8.002 8.002 0 0 0 17 4.26z"/>
+          </svg>
           <div>
             <h2 id="modalTitle" class="recorder-title">Sensor Logger</h2>
             <div class="recorder-subtitle">Dual-track GPS & motion logger</div>
           </div>
         </div>
         <button id="closeRecorderModalBtn" class="close-dialog-btn" type="button" aria-label="Close dialog">
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          <svg class="dialog-close-svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
         </button>
       </div>
 
@@ -203,7 +219,9 @@
         <div class="recorder-ctrl-row">
           <span id="recStateBadge" class="recorder-badge standby">STANDBY</span>
           <button id="toggleRecBtn" class="btn-rec" type="button">
-            <span id="recBtnIcon" class="material-symbols-outlined rec-icon-indicator" aria-hidden="true">fiber_manual_record</span>
+            <svg id="recBtnIcon" class="rec-icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <circle cx="12" cy="12" r="8"/>
+            </svg>
             <span id="toggleRecLabel">Start REC</span>
           </button>
         </div>
@@ -227,27 +245,50 @@
           </div>
         </div>
 
+        <div class="recorder-privacy-row">
+          <label class="privacy-checkbox-label" for="anonymizeLogCheckbox">
+            <input type="checkbox" id="anonymizeLogCheckbox">
+            <span>Mask coordinates in export (Privacy Mode)</span>
+          </label>
+        </div>
+
         <div id="recorderDiagBox" class="recorder-diag-box" hidden></div>
 
         <div id="recorderExportTray" class="recorder-actions-grid" hidden>
           <button id="shareLogBtn" class="btn-action btn-share" type="button">
-            <span class="material-symbols-outlined action-icon" aria-hidden="true">share</span>
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/>
+            </svg>
             <span>Share</span>
           </button>
           <button id="exportTxtBtn" class="btn-action btn-export-txt" type="button">
-            <span class="material-symbols-outlined action-icon" aria-hidden="true">description</span>
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
             <span>TXT Log</span>
           </button>
+          <button id="exportGpxBtn" class="btn-action btn-export-gpx" type="button">
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="m20.5 3-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/>
+            </svg>
+            <span>GPX Track</span>
+          </button>
           <button id="exportJsonBtn" class="btn-action btn-export-json" type="button">
-            <span class="material-symbols-outlined action-icon" aria-hidden="true">data_object</span>
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M4 10c0-1.1.9-2 2-2h1V6H6c-2.21 0-4 1.79-4 4v2c0 .55-.45 1-1 1H0v2h1c.55 0 1 .45 1 1v2c0 2.21 1.79 4 4 4h1v-2H6c-1.1 0-2-.9-2-2v-2.5c0-.83-.67-1.5-1.5-1.5.83 0 1.5-.67 1.5-1.5V10zm16 0c0-1.1-.9-2-2-2h-1V6h1c2.21 0 4 1.79 4 4v2c0 .55.45 1 1 1h1v2h-1c-.55 0-1 .45-1 1v2c0 2.21-1.79 4-4 4h-1v-2h1c1.1 0 2-.9 2-2v-2.5c0-.83.67-1.5 1.5-1.5-.83 0-1.5-.67-1.5-1.5V10z"/>
+            </svg>
             <span>JSON</span>
           </button>
           <button id="copySummaryBtn" class="btn-action btn-copy-summary" type="button">
-            <span class="material-symbols-outlined action-icon" aria-hidden="true">content_copy</span>
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
             <span>Summary</span>
           </button>
           <button id="clearLogBtn" class="btn-action btn-clear-log" type="button">
-            <span class="material-symbols-outlined action-icon" aria-hidden="true">delete_sweep</span>
+            <svg class="action-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zm2-8h6v8H5v-8zm5-6H6L5 5H2v2h12V5h-3z"/>
+            </svg>
             <span>Clear</span>
           </button>
         </div>

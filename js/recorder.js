@@ -27,6 +27,8 @@ export class TelemetryRecorder {
     this.lastMotionRecordAt = 0;
 
     this.records = [];
+    this.writeIndex = 0;
+    this.isFull = false;
     this.gpsCount = 0;
     this.orientationCount = 0;
     this.motionCount = 0;
@@ -69,6 +71,8 @@ export class TelemetryRecorder {
     this.sessionEndTime = null;
     this.isRecording = true;
     this.records = [];
+    this.writeIndex = 0;
+    this.isFull = false;
     this.gpsCount = 0;
     this.orientationCount = 0;
     this.motionCount = 0;
@@ -224,10 +228,30 @@ export class TelemetryRecorder {
   }
 
   appendRecord(record) {
-    if (this.records.length >= this.maxSamples) {
-      this.records.shift(); // 环形缓冲，防止极长时间测试耗尽浏览器内存
+    if (!this.isFull) {
+      this.records.push(record);
+      if (this.records.length >= this.maxSamples) {
+        this.isFull = true;
+        this.writeIndex = 0;
+      }
+    } else {
+      // 达到上限后以 O(1) 覆盖最老记录，彻底避免 Array.prototype.shift() 的 O(N) 内存指针搬移
+      this.records[this.writeIndex] = record;
+      this.writeIndex = (this.writeIndex + 1) % this.maxSamples;
     }
-    this.records.push(record);
+  }
+
+  /**
+   * 按时间升序获取记录（环形队列线性化）
+   */
+  getOrderedRecords() {
+    if (!this.isFull) {
+      return [...this.records];
+    }
+    return [
+      ...this.records.slice(this.writeIndex),
+      ...this.records.slice(0, this.writeIndex)
+    ];
   }
 
   getStats() {
@@ -253,6 +277,8 @@ export class TelemetryRecorder {
 
   clear() {
     this.records = [];
+    this.writeIndex = 0;
+    this.isFull = false;
     this.gpsCount = 0;
     this.orientationCount = 0;
     this.motionCount = 0;
@@ -263,8 +289,59 @@ export class TelemetryRecorder {
     this.isRecording = false;
   }
 
+  /**
+   * 彻底清空内存变量及底层 IndexedDB 物理存储中的历史数据
+   */
+  async clearStorage() {
+    this.clear();
+    if (!this.db) {
+      await this.dbInitPromise;
+    }
+    if (!this.db) {
+      return;
+    }
+    try {
+      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      await new Promise((resolve) => {
+        const req = store.clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => resolve();
+      });
+    } catch (error) {
+      console.warn('Failed to clear IndexedDB store:', error);
+    }
+  }
+
+  /**
+   * 查询已持久化的历史会话列表（用于异常退出后的容灾恢复）
+   */
+  async getStoredSessions() {
+    if (!this.db) {
+      await this.dbInitPromise;
+    }
+    if (!this.db) {
+      return [];
+    }
+    return new Promise((resolve) => {
+      try {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch {
+        resolve([]);
+      }
+    });
+  }
+
   async persistToIndexedDb() {
-    if (!this.db || this.records.length === 0) {
+    if (!this.db) {
+      await this.dbInitPromise;
+    }
+    const ordered = this.getOrderedRecords();
+    if (!this.db || ordered.length === 0) {
       return;
     }
 
@@ -276,7 +353,7 @@ export class TelemetryRecorder {
         sessionStartTime: this.sessionStartTime,
         sessionEndTime: this.sessionEndTime,
         stats: this.getStats(),
-        records: this.records
+        records: ordered
       };
       store.put(snapshot);
     } catch (error) {
@@ -297,7 +374,8 @@ export class TelemetryRecorder {
     let phoneHdgMin = Infinity;
     let phoneHdgMax = -Infinity;
 
-    for (const r of this.records) {
+    const ordered = this.getOrderedRecords();
+    for (const r of ordered) {
       if (r.type === 'GPS') {
         gpsCount++;
         const spd = r.raw.spd_kmh ?? 0;
@@ -336,22 +414,27 @@ export class TelemetryRecorder {
 
   /**
    * 导出为人类直接可读的 .txt 日志文件
+   * @param {Object} options
+   * @param {boolean} options.anonymize 是否对绝对地理经纬度进行脱敏模糊处理
    */
-  exportToTxt() {
+  exportToTxt(options = {}) {
+    const anonymize = Boolean(options.anonymize);
     const stats = this.getStats();
     const diag = this.generateDiagnosticSummary();
     const startDateStr = this.sessionStartTime ? new Date(this.sessionStartTime).toISOString() : 'N/A';
     const endDateStr = this.sessionEndTime ? new Date(this.sessionEndTime).toISOString() : 'N/A';
+    const ordered = this.getOrderedRecords();
 
     const lines = [
       '========================================================================',
-      ' WHERE I AM - SENSOR LOG (DUAL-TRACK TELEMETRY)',
+      ` WHERE I AM - SENSOR LOG (DUAL-TRACK TELEMETRY)${anonymize ? ' [ANONYMIZED]' : ''}`,
       '========================================================================',
       `Session ID: ${this.sessionId || 'N/A'}`,
+      `Privacy Mode:    ${anonymize ? 'COARSE_FUZZING (Coordinates masked for privacy)' : 'FULL_PRECISION'}`,
       `Recording Start: ${startDateStr}`,
       `Recording End:   ${endDateStr}`,
       `Total Duration:  ${stats.durationText} (${(stats.durationMs / 1000).toFixed(1)}s)`,
-      `Total Records:   ${this.records.length} (GPS: ${stats.gpsCount} | ORI: ${stats.orientationCount} | MOT: ${stats.motionCount} | SYS: ${this.systemCount})`,
+      `Buffered Count:  ${ordered.length} (GPS: ${diag.gpsCount} | ORI: ${diag.orientationCount} | MOT: ${diag.motionCount})`,
       '------------------------------------------------------------------------',
       ' DIAGNOSTIC SUMMARY:',
       `  • Max Speed: ${diag.maxSpeedKmh} km/h`,
@@ -365,18 +448,22 @@ export class TelemetryRecorder {
       '------------------------------------------------------------------------'
     ];
 
-    for (const r of this.records) {
+    for (const r of ordered) {
       const timeTag = `[+${formatDurationMs(r.t_ms)}]`;
 
       if (r.type === 'GPS') {
+        const rawLat = anonymize ? `${r.raw.lat.toFixed(2)}****` : r.raw.lat.toFixed(6);
+        const rawLng = anonymize ? `${r.raw.lng.toFixed(2)}****` : r.raw.lng.toFixed(6);
         const rawHdg = r.raw.hdg_deg !== null ? `${r.raw.hdg_deg.toFixed(1)}°` : 'null';
         const spdKmh = r.raw.spd_kmh !== null ? `${r.raw.spd_kmh.toFixed(1)}km/h` : 'null';
         const acc = r.raw.acc !== null ? `±${r.raw.acc.toFixed(1)}m` : 'null';
         const alt = r.raw.alt !== null ? `${r.raw.alt.toFixed(1)}m` : 'null';
-        const gcj = r.computed.gcjLat !== null ? `GCJ(${r.computed.gcjLat.toFixed(5)},${r.computed.gcjLng.toFixed(5)})` : 'None';
+        const gcj = r.computed.gcjLat !== null
+          ? `GCJ(${anonymize ? `${r.computed.gcjLat.toFixed(2)}****` : r.computed.gcjLat.toFixed(5)}, ${anonymize ? `${r.computed.gcjLng.toFixed(2)}****` : r.computed.gcjLng.toFixed(5)})`
+          : 'None';
         const isRel = r.computed.isReliableCourse ? 'RELIABLE' : 'UNRELIABLE';
 
-        lines.push(`${timeTag} [GPS] RAW_WGS(${r.raw.lat.toFixed(6)}, ${r.raw.lng.toFixed(6)}) | Spd: ${spdKmh} | Hdg(Course): ${rawHdg} | Acc: ${acc} | Alt: ${alt} || COMPUTED: ${gcj} | CourseState: ${isRel}`);
+        lines.push(`${timeTag} [GPS] RAW_WGS(${rawLat}, ${rawLng}) | Spd: ${spdKmh} | Hdg(Course): ${rawHdg} | Acc: ${acc} | Alt: ${alt} || COMPUTED: ${gcj} | CourseState: ${isRel}`);
       } else if (r.type === 'ORIENTATION') {
         const wkHdg = r.raw.webkitCompassHeading !== null ? `${r.raw.webkitCompassHeading.toFixed(1)}°` : 'null';
         const wkAcc = r.raw.webkitCompassAccuracy !== null ? `±${r.raw.webkitCompassAccuracy.toFixed(1)}°` : 'null';
@@ -405,25 +492,97 @@ export class TelemetryRecorder {
     }
 
     lines.push('========================================================================');
-    lines.push(' END OF FLIGHT LOG');
+    lines.push(' END OF SENSOR LOG');
     lines.push('========================================================================');
 
     return lines.join('\n');
   }
 
   /**
-   * 导出为结构化 JSON，用于图表渲染和深度分析
+   * 导出为紧凑结构化 JSON（移除 null, 2 缩进以防止移动端 Safari 内存暴涨 OOM 闪退）
+   * @param {Object} options
+   * @param {boolean} options.anonymize
    */
-  exportToJson() {
+  exportToJson(options = {}) {
+    const anonymize = Boolean(options.anonymize);
+    const ordered = this.getOrderedRecords();
+    const recordsToExport = anonymize
+      ? ordered.map((r) => {
+          if (r.type === 'GPS') {
+            return {
+              ...r,
+              raw: {
+                ...r.raw,
+                lat: Number(r.raw.lat.toFixed(2)),
+                lng: Number(r.raw.lng.toFixed(2))
+              },
+              computed: {
+                ...r.computed,
+                gcjLat: r.computed.gcjLat !== null ? Number(r.computed.gcjLat.toFixed(2)) : null,
+                gcjLng: r.computed.gcjLng !== null ? Number(r.computed.gcjLng.toFixed(2)) : null
+              }
+            };
+          }
+          return r;
+        })
+      : ordered;
+
     return JSON.stringify({
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
+      anonymized: anonymize,
       sessionId: this.sessionId,
       sessionStartTime: this.sessionStartTime,
       sessionEndTime: this.sessionEndTime,
       stats: this.getStats(),
       diagnostic: this.generateDiagnosticSummary(),
-      records: this.records
-    }, null, 2);
+      records: recordsToExport
+    });
+  }
+
+  /**
+   * 导出为工业标准 GPX 1.1 轨迹格式（支持无缝导入 Google Earth、两步路、佳明 Garmin、Strava）
+   * @param {Object} options
+   * @param {boolean} options.anonymize
+   */
+  exportToGpx(options = {}) {
+    const anonymize = Boolean(options.anonymize);
+    const ordered = this.getOrderedRecords();
+    const startDateStr = this.sessionStartTime ? new Date(this.sessionStartTime).toISOString() : new Date().toISOString();
+    const trackPoints = [];
+
+    for (const r of ordered) {
+      if (r.type === 'GPS' && Number.isFinite(r.raw.lat) && Number.isFinite(r.raw.lng)) {
+        const lat = anonymize ? r.raw.lat.toFixed(2) : r.raw.lat.toFixed(6);
+        const lng = anonymize ? r.raw.lng.toFixed(2) : r.raw.lng.toFixed(6);
+        const timeIso = new Date(r.epoch).toISOString();
+        const eleTag = Number.isFinite(r.raw.alt) ? `        <ele>${r.raw.alt.toFixed(1)}</ele>\n` : '';
+        const spdTag = Number.isFinite(r.raw.spd_mps) ? `        <speed>${r.raw.spd_mps.toFixed(2)}</speed>\n` : '';
+
+        trackPoints.push(
+          `      <trkpt lat="${lat}" lon="${lng}">\n` +
+          eleTag +
+          `        <time>${timeIso}</time>\n` +
+          spdTag +
+          '      </trkpt>'
+        );
+      }
+    }
+
+    return [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<gpx version="1.1" creator="Where I AM - GPS Compass" xmlns="http://www.topografix.com/GPX/1/1">',
+      '  <metadata>',
+      `    <name>Where I AM Telemetry Log (${this.sessionId || 'Session'})</name>`,
+      `    <time>${startDateStr}</time>`,
+      '  </metadata>',
+      '  <trk>',
+      `    <name>${this.sessionId || 'TelemetryTrack'}</name>`,
+      '    <trkseg>',
+      trackPoints.join('\n'),
+      '    </trkseg>',
+      '  </trk>',
+      '</gpx>'
+    ].join('\n');
   }
 }
 

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-09-04
+
+### Added
+
+- Added standard GPX 1.1 format track exporter (`exportToGpx`) in `js/recorder.js` with trackpoints, elevation, speed, and heading metadata compatible with Strava, Google Earth, and OpenStreetMap.
+- Added privacy protection toggle (`#anonymizeLogCheckbox`) masking geographic coordinates in exported TXT, JSON, and GPX logs.
+- Added vehicle car mount screen orientation compensation (`applyScreenOrientation`) handling 0°, 90°, 180°, and 270° device rotations.
+- Added Android 3D attitude tilt compensation (`getTiltCompensatedHeading`) computing true horizontal azimuth from Euler angles when mounted on inclined vehicle vent holders.
+- Added magnetic interference detection banner (`#magneticAlert`) warning users to recalibrate when high magnetic anomalies or uncalibrated readings occur.
+- Added light haptic feedback (`navigator.vibrate`) on coordinate copying and recording toggling.
+
+### Changed
+
+- Replaced external Google Fonts web font dependencies with inline SVG vectors, ensuring 100% offline self-containment with zero external network requests.
+- Optimized TelemetryRecorder storage to an O(1) circular ring buffer with write index pointer, eliminating array reallocation and UI stutter during extended logging sessions.
+- Redesigned GCJ-02 boundary polygon to accurately exclude border cities (Seoul, Incheon, Busan, Pyongyang, Ulaanbaatar, Vladivostok) from spurious 500m coordinate offsets.
+- Decoupled Hong Kong, Macau, and Taiwan from GCJ-02 offset transformations, conforming to Apple Maps and Google Maps international WGS-84 mapping standards.
+- Hardened Service Worker navigation strategy with a 2500ms timeout race, falling back to cached app shell to prevent white screens in underground garages.
+- Updated Material Design 3 dialog layout with safe viewport constraints (`100svh - 32px`) and internal scrolling to prevent content clipping on landscape screens.
+- Upgraded theme color tokens (`--color-success`, `--color-warning`, `--md-sys-color-error`) to strictly meet WCAG 2.1 AA contrast requirements (minimum 4.5:1).
+- Expanded interactive touch targets on copy and dialog close buttons to minimum 44x44px conforming to mobile ergonomics standards.
+- Bumped Service Worker offline cache version to `where-i-am-v1.7.0`.
+
+### Removed
+
+- Removed un-anonymized road test log `where-i-am-flight-20260818-180919.txt` from repository history and updated `.gitignore` rules.
+
 ## [1.6.0] - 2026-08-19
 
 ### Added

@@ -151,12 +151,13 @@ const missing = await evaluate(`
     const required = [
       'gpsStatus', 'lockStatus', 'updateTime', 'activateBtn', 'activateBtnLabel',
       'compassDial', 'courseMarker', 'unifiedHeadingValue',
+      'magneticAlert',
       'gpsAcc', 'gpsAlt', 'gpsSpd',
       'wgsLat', 'wgsLng', 'gcjCard', 'gcjLat', 'gcjLng', 'copyWgsBtn', 'copyGcjBtn',
       'amapWgs', 'gmapWgs', 'amapGcj', 'gmapGcj',
       'openRecorderModalBtn', 'closeRecorderModalBtn', 'recorderModal', 'recStateBadge', 'toggleRecBtn',
-      'recDuration', 'recGpsCount', 'recOriCount', 'recMemory',
-      'recorderExportTray', 'exportTxtBtn', 'exportJsonBtn', 'shareLogBtn', 'copySummaryBtn', 'clearLogBtn'
+      'recDuration', 'recGpsCount', 'recOriCount', 'recMemory', 'anonymizeLogCheckbox',
+      'recorderExportTray', 'exportTxtBtn', 'exportGpxBtn', 'exportJsonBtn', 'shareLogBtn', 'copySummaryBtn', 'clearLogBtn'
     ];
     return required.filter(id => !document.getElementById(id));
   })()
@@ -169,7 +170,7 @@ const activationCheck = await evaluate(`
     const button = document.getElementById('activateBtn');
     const label = document.getElementById('activateBtnLabel');
     return {
-      hasIcon: Boolean(button.querySelector('.material-symbols-outlined')),
+      hasIcon: Boolean(button.querySelector('svg')),
       labelText: label ? label.textContent : null
     };
   })()
@@ -340,9 +341,11 @@ const recorderCheck = await evaluate(`
     const exportTray = document.getElementById('recorderExportTray');
     const diagBox = document.getElementById('recorderDiagBox');
     const exportTxtBtn = document.getElementById('exportTxtBtn');
+    const exportGpxBtn = document.getElementById('exportGpxBtn');
     const shareLogBtn = document.getElementById('shareLogBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const clearLogBtn = document.getElementById('clearLogBtn');
+    const anonymizeCheckbox = document.getElementById('anonymizeLogCheckbox');
 
     // 1. 打开浮窗
     openBtn.click();
@@ -352,6 +355,12 @@ const recorderCheck = await evaluate(`
     if (recBadge.textContent === 'REC') {
       toggleBtn.click();
     }
+
+    // 隐私复选框交互
+    const initialAnonState = anonymizeCheckbox.checked;
+    anonymizeCheckbox.click();
+    const toggledAnonState = anonymizeCheckbox.checked;
+    const privacyToggleWorks = initialAnonState !== toggledAnonState;
 
     // 3. 点击开启录制
     toggleBtn.click();
@@ -363,7 +372,7 @@ const recorderCheck = await evaluate(`
     const isStopped = recBadge.textContent === 'STOPPED' && !openBtn.classList.contains('is-recording');
     const exportTrayVisible = !exportTray.hidden;
     const diagBoxVisible = !diagBox.hidden && diagBox.textContent.includes('Sensor Diagnostics Report');
-    const hasAllActionButtons = Boolean(exportTxtBtn && shareLogBtn && exportJsonBtn);
+    const hasAllActionButtons = Boolean(exportTxtBtn && exportGpxBtn && shareLogBtn && exportJsonBtn);
 
     // 5. 点击清空重置
     clearLogBtn.click();

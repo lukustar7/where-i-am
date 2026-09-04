@@ -3,4 +3,7 @@ dist/
 coverage/
 node_modules/
 where-i-am-flight-*
+where-i-am-sensor-*
 *.log
+*.gpx
+*.tmp

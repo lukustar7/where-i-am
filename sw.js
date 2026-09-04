@@ -6,7 +6,7 @@
  */
 
 const CACHE_PREFIX = 'where-i-am-';
-const CACHE_NAME = 'where-i-am-v1.6.0';
+const CACHE_NAME = 'where-i-am-v1.7.0';
 const APP_SHELL = './index.html';
 const PRECACHE_ASSETS = [
   './',
@@ -48,8 +48,12 @@ self.addEventListener('activate', (event) => {
 });
 
 async function respondToNavigation(request) {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Navigation network timeout')), 2500);
+  });
+
   try {
-    const networkResponse = await fetch(request);
+    const networkResponse = await Promise.race([fetch(request), timeoutPromise]);
     if (canCache(networkResponse)) {
       try {
         const cache = await caches.open(CACHE_NAME);

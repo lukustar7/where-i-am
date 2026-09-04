@@ -4,7 +4,9 @@ import {
   wgs84ToGcj02
 } from './geo.js';
 import {
+  applyScreenOrientation,
   getRelativeCourseAngle,
+  getTiltCompensatedHeading,
   isReliableCourseHeading,
   normalizeHeading,
   smoothHeading
@@ -43,6 +45,7 @@ const elements = Object.freeze({
   activateBtnLabel: requireElement('activateBtnLabel'),
   activationContainer: requireElement('activationContainer'),
   alertPanel: requireElement('alertPanel'),
+  magneticAlert: requireElement('magneticAlert'),
   gpsStatus: requireElement('gpsStatus'),
   lockStatus: requireElement('lockStatus'),
   compassDial: requireElement('compassDial'),
@@ -76,10 +79,12 @@ const elements = Object.freeze({
   recGpsCount: requireElement('recGpsCount'),
   recOriCount: requireElement('recOriCount'),
   recMemory: requireElement('recMemory'),
+  anonymizeLogCheckbox: requireElement('anonymizeLogCheckbox'),
   recorderExportTray: requireElement('recorderExportTray'),
   recorderDiagBox: requireElement('recorderDiagBox'),
   shareLogBtn: requireElement('shareLogBtn'),
   exportTxtBtn: requireElement('exportTxtBtn'),
+  exportGpxBtn: requireElement('exportGpxBtn'),
   exportJsonBtn: requireElement('exportJsonBtn'),
   copySummaryBtn: requireElement('copySummaryBtn'),
   clearLogBtn: requireElement('clearLogBtn')
@@ -573,27 +578,73 @@ function recordOrientationState(event) {
   });
 }
 
+function getScreenAngle() {
+  if (window.screen && window.screen.orientation && Number.isFinite(window.screen.orientation.angle)) {
+    return window.screen.orientation.angle;
+  }
+  if (Number.isFinite(window.orientation)) {
+    return window.orientation;
+  }
+  return 0;
+}
+
 function handleOrientation(event) {
+  if (Number.isFinite(event.webkitCompassAccuracy)) {
+    const acc = event.webkitCompassAccuracy;
+    if (acc < 0 || (acc > 25 && acc < 180)) {
+      elements.magneticAlert.hidden = false;
+    } else {
+      elements.magneticAlert.hidden = true;
+    }
+  }
+
+  const screenAngle = getScreenAngle();
+
   if (Number.isFinite(event.webkitCompassHeading)) {
-    updatePhoneHeading(event.webkitCompassHeading, 'MAG');
-  } else if (event.absolute === true && Number.isFinite(event.alpha)) {
-    updatePhoneHeading(360 - event.alpha, 'MAG');
+    const compensated = applyScreenOrientation(event.webkitCompassHeading, screenAngle);
+    updatePhoneHeading(compensated, 'MAG');
   } else if (Number.isFinite(event.alpha)) {
-    updatePhoneHeading(360 - event.alpha, 'RELATIVE');
+    let heading = 360 - event.alpha;
+    if (Number.isFinite(event.beta) && Number.isFinite(event.gamma)) {
+      const tiltComp = getTiltCompensatedHeading(event.alpha, event.beta, event.gamma);
+      if (tiltComp !== null) {
+        heading = tiltComp;
+      }
+    }
+    const compensated = applyScreenOrientation(heading, screenAngle);
+    updatePhoneHeading(compensated, event.absolute === true ? 'MAG' : 'RELATIVE');
   }
   recordOrientationState(event);
 }
 
 function handleOrientationAbsolute(event) {
+  const screenAngle = getScreenAngle();
   if (Number.isFinite(event.alpha)) {
-    updatePhoneHeading(360 - event.alpha, 'MAG');
+    let heading = 360 - event.alpha;
+    if (Number.isFinite(event.beta) && Number.isFinite(event.gamma)) {
+      const tiltComp = getTiltCompensatedHeading(event.alpha, event.beta, event.gamma);
+      if (tiltComp !== null) {
+        heading = tiltComp;
+      }
+    }
+    const compensated = applyScreenOrientation(heading, screenAngle);
+    updatePhoneHeading(compensated, 'MAG');
   }
   recordOrientationState(event);
 }
 
 function handleOrientationFallback(event) {
+  const screenAngle = getScreenAngle();
   if (Number.isFinite(event.alpha)) {
-    updatePhoneHeading(360 - event.alpha, 'RELATIVE');
+    let heading = 360 - event.alpha;
+    if (Number.isFinite(event.beta) && Number.isFinite(event.gamma)) {
+      const tiltComp = getTiltCompensatedHeading(event.alpha, event.beta, event.gamma);
+      if (tiltComp !== null) {
+        heading = tiltComp;
+      }
+    }
+    const compensated = applyScreenOrientation(heading, screenAngle);
+    updatePhoneHeading(compensated, 'RELATIVE');
   }
   recordOrientationState(event);
 }
@@ -691,6 +742,14 @@ function updateFreshnessIndicators() {
     if (state.locationStatus === 'watching') {
       if (ageMs >= APP_CONFIG.gpsFixStaleMs) {
         setStatusBadge(elements.gpsStatus, 'GPS STALE');
+        if (state.courseHeading !== null) {
+          state.courseHeading = null;
+          renderCompassHeading();
+        }
+        if (state.currentData.speed !== null) {
+          state.currentData.speed = null;
+          elements.gpsSpd.textContent = 'N/A';
+        }
       } else {
         setStatusBadge(elements.gpsStatus, 'GPS ON', 'active');
       }
@@ -732,7 +791,7 @@ async function writeClipboard(text) {
 }
 
 function flashCopyResult(button, succeeded) {
-  const path = button.querySelector('path');
+  const path = button.querySelector('svg path');
   if (!path) {
     return;
   }
@@ -770,6 +829,7 @@ async function copyCoordinates(kind) {
 
   try {
     await writeClipboard(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+    navigator.vibrate?.(15);
     flashCopyResult(button, true);
   } catch (error) {
     console.warn('Clipboard write failed:', error);
@@ -814,7 +874,7 @@ function updateRecorderUi() {
     elements.recStateBadge.className = 'recorder-badge recording';
     elements.toggleRecBtn.classList.add('is-recording');
     elements.toggleRecLabel.textContent = 'Stop REC';
-    elements.recBtnIcon.textContent = 'stop';
+    elements.recBtnIcon.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2"/>';
     elements.openRecorderModalBtn.classList.add('is-recording');
     elements.openRecorderModalBtn.textContent = `● Recording (${stats.durationText})`;
   } else {
@@ -822,7 +882,7 @@ function updateRecorderUi() {
     elements.recStateBadge.className = 'recorder-badge standby';
     elements.toggleRecBtn.classList.remove('is-recording');
     elements.toggleRecLabel.textContent = 'Start REC';
-    elements.recBtnIcon.textContent = 'fiber_manual_record';
+    elements.recBtnIcon.innerHTML = '<circle cx="12" cy="12" r="8"/>';
     elements.openRecorderModalBtn.classList.remove('is-recording');
     elements.openRecorderModalBtn.textContent = 'Sensor Logs';
   }
@@ -839,14 +899,21 @@ function renderDiagnosticSummary() {
   elements.recorderDiagBox.hidden = false;
 }
 
+function handleMotionRecord(event) {
+  recorder.recordMotion(event);
+}
+
 function toggleRecording() {
+  navigator.vibrate?.(15);
   if (recorder.isRecording) {
     recorder.stopSession();
+    window.removeEventListener('devicemotion', handleMotionRecord, true);
     updateRecorderUi();
     elements.recorderExportTray.hidden = false;
     renderDiagnosticSummary();
   } else {
     recorder.startSession();
+    window.addEventListener('devicemotion', handleMotionRecord, true);
     updateRecorderUi();
     elements.recorderExportTray.hidden = true;
     elements.recorderDiagBox.hidden = true;
@@ -855,19 +922,29 @@ function toggleRecording() {
 }
 
 function exportTxtLog() {
-  const txtContent = recorder.exportToTxt();
+  const anonymize = elements.anonymizeLogCheckbox.checked;
+  const txtContent = recorder.exportToTxt({ anonymize });
   const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.txt`;
   downloadBlob(new Blob([txtContent], { type: 'text/plain;charset=utf-8' }), filename);
 }
 
+function exportGpxLog() {
+  const anonymize = elements.anonymizeLogCheckbox.checked;
+  const gpxContent = recorder.exportToGpx({ anonymize });
+  const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.gpx`;
+  downloadBlob(new Blob([gpxContent], { type: 'application/gpx+xml;charset=utf-8' }), filename);
+}
+
 function exportJsonLog() {
-  const jsonContent = recorder.exportToJson();
+  const anonymize = elements.anonymizeLogCheckbox.checked;
+  const jsonContent = recorder.exportToJson({ anonymize });
   const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.json`;
   downloadBlob(new Blob([jsonContent], { type: 'application/json;charset=utf-8' }), filename);
 }
 
 async function shareFlightLog() {
-  const txtContent = recorder.exportToTxt();
+  const anonymize = elements.anonymizeLogCheckbox.checked;
+  const txtContent = recorder.exportToTxt({ anonymize });
   const filename = `where-i-am-sensor-${getFormattedFileTimestamp()}.txt`;
   const file = new File([txtContent], filename, { type: 'text/plain;charset=utf-8' });
 
@@ -911,15 +988,18 @@ async function copyFlightSummary() {
   }
 }
 
-function clearFlightLog() {
+async function clearFlightLog() {
+  navigator.vibrate?.(15);
   if (recorder.isRecording) {
     recorder.stopSession();
+    window.removeEventListener('devicemotion', handleMotionRecord, true);
   }
   recorder.clear();
   updateRecorderUi();
   elements.recorderExportTray.hidden = true;
   elements.recorderDiagBox.hidden = true;
   elements.recorderDiagBox.textContent = '';
+  await recorder.clearStorage();
 }
 
 function bindEvents() {
@@ -927,7 +1007,7 @@ function bindEvents() {
   elements.copyWgsBtn.addEventListener('click', () => copyCoordinates('wgs'));
   elements.copyGcjBtn.addEventListener('click', () => copyCoordinates('gcj'));
 
-  // 模态浮窗打开与关闭
+  // 模态浮窗打开、关闭与焦点恢复
   elements.openRecorderModalBtn.addEventListener('click', () => {
     if (typeof elements.recorderModal.showModal === 'function') {
       elements.recorderModal.showModal();
@@ -941,6 +1021,7 @@ function bindEvents() {
       elements.recorderModal.close();
     } else {
       elements.recorderModal.removeAttribute('open');
+      elements.openRecorderModalBtn.focus();
     }
   });
 
@@ -950,18 +1031,28 @@ function bindEvents() {
     }
   });
 
+  elements.recorderModal.addEventListener('close', () => {
+    elements.openRecorderModalBtn.focus();
+  });
+
   // 记录器控制与导出绑定
   elements.toggleRecBtn.addEventListener('click', toggleRecording);
   elements.exportTxtBtn.addEventListener('click', exportTxtLog);
+  elements.exportGpxBtn.addEventListener('click', exportGpxLog);
   elements.exportJsonBtn.addEventListener('click', exportJsonLog);
   elements.shareLogBtn.addEventListener('click', shareFlightLog);
   elements.copySummaryBtn.addEventListener('click', copyFlightSummary);
   elements.clearLogBtn.addEventListener('click', clearFlightLog);
 
-  // 原始运动传感器监听
-  window.addEventListener('devicemotion', (event) => {
-    recorder.recordMotion(event);
-  }, true);
+  // 屏幕旋转监听（车载手机支架旋转横屏或竖屏时更新方向渲染）
+  if (window.screen && window.screen.orientation) {
+    window.screen.orientation.addEventListener('change', () => {
+      scheduleCompassRender();
+    });
+  }
+  window.addEventListener('orientationchange', () => {
+    scheduleCompassRender();
+  });
 
   for (const link of [elements.amapWgs, elements.gmapWgs, elements.amapGcj, elements.gmapGcj]) {
     link.addEventListener('click', (event) => {
