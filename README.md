@@ -6,7 +6,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 
 - Real-time dual compass displaying simultaneous handheld phone heading and moving GPS trajectory course with vehicle mount compensation.
 - Reports WGS-84 coordinates, optional GCJ-02 coordinates, altitude, accuracy, and speed.
-- In-browser high-precision flight telemetry recorder capturing dual-track raw hardware inputs (GPS, magnetometer, gyroscope, accelerometer) alongside computed display output states.
+- In-browser high-precision sensor data recorder capturing dual-track raw hardware inputs (GPS, magnetometer, gyroscope, accelerometer) alongside computed display output states.
 - Export formats supporting human-readable TXT logs, standard GPX tracks, structured JSON logs, privacy masking, system share sheet invocation, and diagnostic summaries.
 - Provides Apple Maps and Google Maps links only after a valid GPS fix.
 - Supports offline startup and Screen Wake Lock where the browser permits them.
@@ -22,7 +22,7 @@ An offline-capable GPS compass PWA for mobile browsers. It has no runtime depend
 
 ## Limitations
 
-- Coordinate Precision: Both WGS-84 and GCJ-02 coordinates are generally accurate under typical mobile operating conditions. WGS-84 coordinates reflect direct satellite fixes from the device GNSS receiver.
+- Coordinate Precision: Both WGS-84 and GCJ-02 coordinates are generally accurate under typical mobile operating conditions. WGS-84 coordinates reflect direct satellite fixes from the device GNSS receiver, while GCJ-02 offsets are dynamically computed for certain area map alignment.
 - High-Speed Heading Behavior: Web browsers operate under platform sandbox constraints. When traveling at vehicular speeds (typically above 10–15 km/h), mobile operating systems (notably WebKit/CoreLocation on iOS) prioritize GPS course-over-ground trajectory over the hardware magnetometer heading. As a result, the compass heading automatically reflects vehicle travel direction rather than the physical orientation of the device itself. This is an intended operating system behavior and browser platform limitation rather than an application defect.
 
 ## Development
