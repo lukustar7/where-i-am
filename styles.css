@@ -355,8 +355,6 @@ body {
 .course-marker {
   transition: opacity 160ms ease;
   will-change: transform;
-  transform-box: fill-box;
-  transform-origin: center;
 }
 
 .dial-tick {
